@@ -23,6 +23,6 @@ cd ../goat_racer
 scripts/ros up
 docker compose -f docker/compose.yaml exec ros-humble bash -lc \
   "source /opt/ros/humble/setup.bash && \
-   source /workspace/goat_racer/goat_ws/install/setup.bash && \
+   source /workspace/goat_racer/ros_ws/install/setup.bash && \
    ros2 launch goat_vesc_ros goat_vesc.launch.py"
 ```

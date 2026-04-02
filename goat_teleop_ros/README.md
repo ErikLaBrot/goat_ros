@@ -1,10 +1,10 @@
 # goat_teleop
 
-`goat_teleop` is a minimal ROS 2 Humble joystick teleop package for GOAT. It subscribes to `sensor_msgs/msg/Joy` on `/joy` and publishes a throttle-only `std_msgs/msg/Float32` command on `cmd/vesc` while the configured enable button is held. This smoke-test path is intentionally motor-only and leaves steering out of scope.
+`goat_teleop` is a minimal ROS 2 Humble joystick teleop package for GOAT. It subscribes to `sensor_msgs/msg/Joy` on `/joy` and publishes `goat_vesc_ros/msg/VescControlCommand` on `cmd/vesc` for every joystick update. While the configured enable button is held it publishes scaled drive duty; otherwise it publishes a zero-duty command. This smoke-test path still only maps joystick throttle into drive duty, but it now publishes a fixed servo position alongside the drive command.
 
 ## Custom Messages
 
-This package does not define any custom messages.
+This package does not define custom messages, but it publishes `goat_vesc_ros/msg/VescControlCommand`.
 
 ## Launch Files
 
@@ -30,6 +30,7 @@ The default config uses:
 - `throttle_axis: 1`
 - `enable_button: 4`
 - `command_scale: 0.10`
+- `servo_position: 0.5`
 - `command_topic: cmd/vesc`
 
 You can override the joystick device or deadzone at launch time:

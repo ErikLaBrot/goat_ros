@@ -4,4 +4,5 @@ goat_joy:
     enable_button: 4
     command_scale: 0.10
     invert_throttle: false
+    servo_position: 0.5
     command_topic: "cmd/vesc"

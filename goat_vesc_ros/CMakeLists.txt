@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(ament_cmake REQUIRED)
+find_package(builtin_interfaces REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
 find_package(rosidl_default_runtime REQUIRED)
@@ -16,8 +17,9 @@ find_package(std_msgs REQUIRED)
 find_package(goat_vesc CONFIG REQUIRED)
 
 rosidl_generate_interfaces(${PROJECT_NAME}
+  "msg/VescControlCommand.msg"
   "msg/VescMotorState.msg"
-  DEPENDENCIES std_msgs
+  DEPENDENCIES builtin_interfaces std_msgs
 )
 
 add_library(vesc_node_lib STATIC
@@ -29,6 +31,7 @@ target_include_directories(vesc_node_lib
     $<INSTALL_INTERFACE:include>
 )
 ament_target_dependencies(vesc_node_lib
+  builtin_interfaces
   rclcpp
   sensor_msgs
   std_msgs
@@ -71,7 +74,13 @@ install(FILES package.xml
   DESTINATION share/${PROJECT_NAME}
 )
 
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+endif()
+
 ament_export_dependencies(
+  builtin_interfaces
   goat_vesc
   rclcpp
   rosidl_default_runtime

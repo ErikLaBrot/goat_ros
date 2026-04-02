@@ -1,8 +1,10 @@
+// Copyright 2026 GOAT Maintainers
+
 #include "goat_vesc_ros/vesc_node.hpp"
 
+#include <algorithm>
 #include <cmath>
 #include <cstdint>
-#include <limits>
 #include <stdexcept>
 #include <utility>
 
@@ -10,35 +12,42 @@
 #include "rclcpp/qos.hpp"
 #include "rclcpp/time.hpp"
 
-using namespace std::chrono_literals;
+namespace goat_vesc_ros
+{
 
-namespace goat_vesc_ros {
-
-namespace {
+namespace
+{
 
 constexpr auto kDisconnectedWarnThrottle = 5000;
 constexpr auto kReconnectWarnThrottle = 5000;
 
 } // namespace
 
-VescNode::VescNode(const rclcpp::NodeOptions& options) : Node("goat_vesc_ros", options) {
+VescNode::VescNode(const rclcpp::NodeOptions & options)
+: Node("goat_vesc_ros", options)
+{
   declare_parameters();
   params_ = load_parameters();
   validate_parameters(params_);
-  command_mode_ = parse_command_mode(params_.command_mode);
 
   goat_vesc::VescConfig config;
   config.device_path = params_.device_path;
   config.baud = params_.baud;
-  config.imu_poll_interval = std::chrono::milliseconds(params_.imu_poll_interval_ms);
-  config.motor_poll_interval = std::chrono::milliseconds(params_.motor_poll_interval_ms);
-  config.poll_response_timeout = std::chrono::milliseconds(params_.poll_response_timeout_ms);
-  config.query_guard_window = std::chrono::milliseconds(params_.query_guard_window_ms);
-  config.command_watchdog_timeout = std::chrono::milliseconds(params_.command_watchdog_timeout_ms);
-  config.command_watchdog_action = parse_watchdog_action(params_.command_watchdog_action);
+  config.imu_poll_interval =
+    std::chrono::milliseconds(params_.imu_poll_interval_ms);
+  config.motor_poll_interval =
+    std::chrono::milliseconds(params_.motor_poll_interval_ms);
+  config.poll_response_timeout =
+    std::chrono::milliseconds(params_.poll_response_timeout_ms);
+  config.query_guard_window =
+    std::chrono::milliseconds(params_.query_guard_window_ms);
+  config.command_watchdog_timeout =
+    std::chrono::milliseconds(params_.command_watchdog_timeout_ms);
+  config.command_watchdog_action =
+    parse_watchdog_action(params_.command_watchdog_action);
   config.max_brake_current = static_cast<float>(params_.max_brake_current);
   config.command_watchdog_brake_current =
-      static_cast<float>(params_.command_watchdog_brake_current);
+    static_cast<float>(params_.command_watchdog_brake_current);
 
   client_ = std::make_unique<goat_vesc::VescClient>(std::move(config));
 
@@ -47,7 +56,8 @@ VescNode::VescNode(const rclcpp::NodeOptions& options) : Node("goat_vesc_ros", o
   attempt_initial_connect();
 }
 
-VescNode::~VescNode() {
+VescNode::~VescNode()
+{
   reconnect_timer_.reset();
   command_subscription_.reset();
   if (client_) {
@@ -57,7 +67,8 @@ VescNode::~VescNode() {
   motor_state_subscription_.reset();
 }
 
-void VescNode::declare_parameters() {
+void VescNode::declare_parameters()
+{
   this->declare_parameter<std::string>("device_path", "");
   this->declare_parameter<int>("baud", 115200);
   this->declare_parameter<bool>("auto_connect", true);
@@ -76,36 +87,44 @@ void VescNode::declare_parameters() {
   this->declare_parameter<std::string>("frame_id", "base_link");
   this->declare_parameter<std::string>("imu_frame_id", "");
   this->declare_parameter<std::string>("command_topic", "cmd/vesc");
-  this->declare_parameter<std::string>("command_mode", "current");
 }
 
-VescNode::Parameters VescNode::load_parameters() {
+VescNode::Parameters VescNode::load_parameters()
+{
   Parameters params;
   params.device_path = this->get_parameter("device_path").as_string();
   params.baud = this->get_parameter("baud").as_int();
   params.auto_connect = this->get_parameter("auto_connect").as_bool();
   params.auto_reconnect = this->get_parameter("auto_reconnect").as_bool();
-  params.reconnect_period_ms = this->get_parameter("reconnect_period_ms").as_int();
-  params.imu_poll_interval_ms = this->get_parameter("imu_poll_interval_ms").as_int();
-  params.motor_poll_interval_ms = this->get_parameter("motor_poll_interval_ms").as_int();
-  params.poll_response_timeout_ms = this->get_parameter("poll_response_timeout_ms").as_int();
-  params.query_guard_window_ms = this->get_parameter("query_guard_window_ms").as_int();
+  params.reconnect_period_ms =
+    this->get_parameter("reconnect_period_ms").as_int();
+  params.imu_poll_interval_ms =
+    this->get_parameter("imu_poll_interval_ms").as_int();
+  params.motor_poll_interval_ms =
+    this->get_parameter("motor_poll_interval_ms").as_int();
+  params.poll_response_timeout_ms =
+    this->get_parameter("poll_response_timeout_ms").as_int();
+  params.query_guard_window_ms =
+    this->get_parameter("query_guard_window_ms").as_int();
   params.command_watchdog_timeout_ms =
-      this->get_parameter("command_watchdog_timeout_ms").as_int();
-  params.command_watchdog_action = this->get_parameter("command_watchdog_action").as_string();
-  params.max_brake_current = this->get_parameter("max_brake_current").as_double();
+    this->get_parameter("command_watchdog_timeout_ms").as_int();
+  params.command_watchdog_action =
+    this->get_parameter("command_watchdog_action").as_string();
+  params.max_brake_current =
+    this->get_parameter("max_brake_current").as_double();
   params.command_watchdog_brake_current =
-      this->get_parameter("command_watchdog_brake_current").as_double();
+    this->get_parameter("command_watchdog_brake_current").as_double();
   params.publish_imu = this->get_parameter("publish_imu").as_bool();
-  params.publish_motor_state = this->get_parameter("publish_motor_state").as_bool();
+  params.publish_motor_state =
+    this->get_parameter("publish_motor_state").as_bool();
   params.frame_id = this->get_parameter("frame_id").as_string();
   params.imu_frame_id = this->get_parameter("imu_frame_id").as_string();
   params.command_topic = this->get_parameter("command_topic").as_string();
-  params.command_mode = this->get_parameter("command_mode").as_string();
   return params;
 }
 
-void VescNode::validate_parameters(const Parameters& params) const {
+void VescNode::validate_parameters(const Parameters & params) const
+{
   if (params.baud <= 0) {
     throw std::invalid_argument("baud must be positive");
   }
@@ -119,19 +138,22 @@ void VescNode::validate_parameters(const Parameters& params) const {
     throw std::invalid_argument("motor_poll_interval_ms must be non-negative");
   }
   if (params.poll_response_timeout_ms < 0) {
-    throw std::invalid_argument("poll_response_timeout_ms must be non-negative");
+    throw std::invalid_argument(
+            "poll_response_timeout_ms must be non-negative");
   }
   if (params.query_guard_window_ms < 0) {
     throw std::invalid_argument("query_guard_window_ms must be non-negative");
   }
   if (params.command_watchdog_timeout_ms < 0) {
-    throw std::invalid_argument("command_watchdog_timeout_ms must be non-negative");
+    throw std::invalid_argument(
+            "command_watchdog_timeout_ms must be non-negative");
   }
   if (params.max_brake_current < 0.0) {
     throw std::invalid_argument("max_brake_current must be non-negative");
   }
   if (params.command_watchdog_brake_current < 0.0) {
-    throw std::invalid_argument("command_watchdog_brake_current must be non-negative");
+    throw std::invalid_argument(
+            "command_watchdog_brake_current must be non-negative");
   }
   if (params.frame_id.empty()) {
     throw std::invalid_argument("frame_id must not be empty");
@@ -140,24 +162,12 @@ void VescNode::validate_parameters(const Parameters& params) const {
     throw std::invalid_argument("command_topic must not be empty");
   }
 
-  (void)parse_command_mode(params.command_mode);
   (void)parse_watchdog_action(params.command_watchdog_action);
 }
 
-VescNode::CommandMode VescNode::parse_command_mode(const std::string& value) {
-  if (value == "current") {
-    return CommandMode::Current;
-  }
-  if (value == "duty") {
-    return CommandMode::Duty;
-  }
-  if (value == "rpm") {
-    return CommandMode::Rpm;
-  }
-  throw std::invalid_argument("command_mode must be one of: current, duty, rpm");
-}
-
-goat_vesc::ControlWatchdogAction VescNode::parse_watchdog_action(const std::string& value) {
+goat_vesc::ControlWatchdogAction
+VescNode::parse_watchdog_action(const std::string & value)
+{
   if (value == "disabled") {
     return goat_vesc::ControlWatchdogAction::Disabled;
   }
@@ -168,55 +178,72 @@ goat_vesc::ControlWatchdogAction VescNode::parse_watchdog_action(const std::stri
     return goat_vesc::ControlWatchdogAction::BrakeCurrent;
   }
   throw std::invalid_argument(
-      "command_watchdog_action must be one of: disabled, coast, brake_current");
+          "command_watchdog_action must be one of: disabled, coast, brake_current");
 }
 
-void VescNode::log_parameter_summary() const {
-  RCLCPP_INFO(this->get_logger(),
-              "Starting goat_vesc_ros with device_path='%s', baud=%d, auto_connect=%s, "
-              "auto_reconnect=%s, imu_poll_interval_ms=%d, motor_poll_interval_ms=%d, "
-              "command_topic='%s', command_mode='%s'",
-              params_.device_path.c_str(), params_.baud, params_.auto_connect ? "true" : "false",
-              params_.auto_reconnect ? "true" : "false", params_.imu_poll_interval_ms,
-              params_.motor_poll_interval_ms, params_.command_topic.c_str(),
-              params_.command_mode.c_str());
+void VescNode::log_parameter_summary() const
+{
+  RCLCPP_INFO(
+    this->get_logger(),
+    "Starting goat_vesc_ros with device_path='%s', baud=%d, auto_connect=%s, "
+    "auto_reconnect=%s, imu_poll_interval_ms=%d, motor_poll_interval_ms=%d, "
+    "command_topic='%s'",
+    params_.device_path.c_str(), params_.baud,
+    params_.auto_connect ? "true" : "false",
+    params_.auto_reconnect ? "true" : "false", params_.imu_poll_interval_ms,
+    params_.motor_poll_interval_ms, params_.command_topic.c_str());
 }
 
-void VescNode::create_interfaces() {
+void VescNode::create_interfaces()
+{
   if (params_.publish_imu) {
-    imu_publisher_ =
-        this->create_publisher<sensor_msgs::msg::Imu>("imu/data_raw", rclcpp::SensorDataQoS());
+    imu_publisher_ = this->create_publisher<sensor_msgs::msg::Imu>(
+      "imu/data_raw", rclcpp::SensorDataQoS());
   }
 
   if (params_.publish_motor_state) {
-    motor_state_publisher_ = this->create_publisher<goat_vesc_ros::msg::VescMotorState>(
-        "motor_state", rclcpp::SensorDataQoS());
+    motor_state_publisher_ =
+      this->create_publisher<goat_vesc_ros::msg::VescMotorState>(
+      "motor_state", rclcpp::SensorDataQoS());
   }
 
-  command_subscription_ = this->create_subscription<std_msgs::msg::Float32>(
-      params_.command_topic, rclcpp::QoS(10),
-      [this](const std_msgs::msg::Float32::SharedPtr message) { handle_command(message); });
+  command_subscription_ =
+    this->create_subscription<goat_vesc_ros::msg::VescControlCommand>(
+    params_.command_topic, rclcpp::QoS(10),
+    [this](
+      const goat_vesc_ros::msg::VescControlCommand::SharedPtr message) {
+      handle_command(message);
+    });
 
-  imu_subscription_ = client_->subscribe_imu(
-      [this](const goat_vesc::VescIMUData& sample) { handle_imu_sample(sample); });
+  imu_subscription_ =
+    client_->subscribe_imu(
+    [this](const goat_vesc::VescIMUData & sample) {
+      handle_imu_sample(sample);
+    });
   motor_state_subscription_ = client_->subscribe_motor_state(
-      [this](const goat_vesc::VescMotorState& sample) { handle_motor_state_sample(sample); });
+    [this](const goat_vesc::VescMotorState & sample) {
+      handle_motor_state_sample(sample);
+    });
 
   reconnect_timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(params_.reconnect_period_ms),
-      [this] { reconnect_timer_callback(); });
+    std::chrono::milliseconds(params_.reconnect_period_ms),
+    [this] {reconnect_timer_callback();});
 }
 
-void VescNode::attempt_initial_connect() {
+void VescNode::attempt_initial_connect()
+{
   if (!params_.auto_connect) {
-    RCLCPP_INFO(this->get_logger(), "auto_connect is disabled; skipping initial connect.");
+    RCLCPP_INFO(
+      this->get_logger(),
+      "auto_connect is disabled; skipping initial connect.");
     return;
   }
 
   (void)attempt_connect("startup", false);
 }
 
-void VescNode::reconnect_timer_callback() {
+void VescNode::reconnect_timer_callback()
+{
   if (sync_connected_state()) {
     return;
   }
@@ -228,7 +255,8 @@ void VescNode::reconnect_timer_callback() {
   (void)attempt_connect("reconnect timer", true);
 }
 
-bool VescNode::sync_connected_state() {
+bool VescNode::sync_connected_state()
+{
   const bool is_connected = client_ && client_->is_connected();
   const bool was_connected = connected_.exchange(is_connected);
   if (was_connected && !is_connected) {
@@ -237,7 +265,8 @@ bool VescNode::sync_connected_state() {
   return is_connected;
 }
 
-bool VescNode::attempt_connect(const char* reason, bool throttled) {
+bool VescNode::attempt_connect(const char * reason, bool throttled)
+{
   if (!client_) {
     return false;
   }
@@ -256,71 +285,71 @@ bool VescNode::attempt_connect(const char* reason, bool throttled) {
   }
 
   if (throttled) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), kReconnectWarnThrottle,
-                         "VESC connection attempt failed (%s).", reason);
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(),
+      kReconnectWarnThrottle,
+      "VESC connection attempt failed (%s).", reason);
   } else {
-    RCLCPP_WARN(this->get_logger(), "VESC connection attempt failed (%s).", reason);
+    RCLCPP_WARN(
+      this->get_logger(), "VESC connection attempt failed (%s).",
+      reason);
   }
   return false;
 }
 
-void VescNode::reset_post_connect_state() {
-  {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    latest_imu_.reset();
-    latest_motor_state_.reset();
-    last_imu_receipt_time_.reset();
-    last_motor_state_receipt_time_.reset();
-  }
+void VescNode::reset_post_connect_state()
+{
   saw_first_imu_.store(false);
   saw_first_motor_state_.store(false);
 }
 
-void VescNode::handle_command(const std_msgs::msg::Float32::SharedPtr message) {
-  if (!std::isfinite(message->data)) {
+void VescNode::handle_command(
+  const goat_vesc_ros::msg::VescControlCommand::SharedPtr message)
+{
+  if (!std::isfinite(message->drive_value) ||
+    !std::isfinite(message->servo_position))
+  {
     RCLCPP_WARN(this->get_logger(), "Rejected non-finite VESC command.");
     return;
   }
 
-  if (!sync_connected_state()) {
-    RCLCPP_WARN_THROTTLE(this->get_logger(), *this->get_clock(), kDisconnectedWarnThrottle,
-                         "Rejected VESC command while disconnected.");
+  if (message->drive_mode !=
+    goat_vesc_ros::msg::VescControlCommand::MODE_DUTY)
+  {
+    RCLCPP_WARN(
+      this->get_logger(), "Rejected unsupported drive mode %u.",
+      static_cast<unsigned int>(message->drive_mode));
     return;
   }
 
-  bool accepted = false;
-  switch (command_mode_) {
-  case CommandMode::Current:
-    accepted = client_->set_current(message->data);
-    break;
-  case CommandMode::Duty:
-    accepted = client_->set_duty(message->data);
-    break;
-  case CommandMode::Rpm: {
-    const double rounded = std::llround(static_cast<double>(message->data));
-    if (rounded < static_cast<double>(std::numeric_limits<std::int32_t>::min()) ||
-        rounded > static_cast<double>(std::numeric_limits<std::int32_t>::max())) {
-      RCLCPP_WARN(this->get_logger(), "Rejected rpm command outside int32 range.");
-      return;
-    }
-    accepted = client_->set_rpm(static_cast<std::int32_t>(rounded));
-    break;
-  }
+  if (!sync_connected_state()) {
+    RCLCPP_WARN_THROTTLE(
+      this->get_logger(), *this->get_clock(),
+      kDisconnectedWarnThrottle,
+      "Rejected VESC command while disconnected.");
+    return;
   }
 
-  if (!accepted) {
-    RCLCPP_WARN(this->get_logger(), "VESC command was not accepted by goat_vesc.");
+  const float drive_value = std::clamp(message->drive_value, -1.0f, 1.0f);
+  const float servo_position = std::clamp(message->servo_position, 0.0f, 1.0f);
+
+  const bool drive_accepted = client_->set_duty(drive_value);
+  if (!drive_accepted) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "VESC drive command was not accepted by goat_vesc.");
+  }
+
+  const bool servo_accepted = client_->set_servo_pos(servo_position);
+  if (!servo_accepted) {
+    RCLCPP_WARN(
+      this->get_logger(),
+      "VESC servo command was not accepted by goat_vesc.");
   }
 }
 
-void VescNode::handle_imu_sample(const goat_vesc::VescIMUData& sample) {
-  const auto receipt_time = this->get_clock()->now();
-  {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    latest_imu_ = sample;
-    last_imu_receipt_time_ = receipt_time;
-  }
-
+void VescNode::handle_imu_sample(const goat_vesc::VescIMUData & sample)
+{
   connected_.store(true);
   if (!saw_first_imu_.exchange(true)) {
     RCLCPP_INFO(this->get_logger(), "Received first IMU telemetry sample.");
@@ -331,17 +360,14 @@ void VescNode::handle_imu_sample(const goat_vesc::VescIMUData& sample) {
   }
 }
 
-void VescNode::handle_motor_state_sample(const goat_vesc::VescMotorState& sample) {
-  const auto receipt_time = this->get_clock()->now();
-  {
-    std::lock_guard<std::mutex> lock(state_mutex_);
-    latest_motor_state_ = sample;
-    last_motor_state_receipt_time_ = receipt_time;
-  }
-
+void VescNode::handle_motor_state_sample(
+  const goat_vesc::VescMotorState & sample)
+{
   connected_.store(true);
   if (!saw_first_motor_state_.exchange(true)) {
-    RCLCPP_INFO(this->get_logger(), "Received first motor-state telemetry sample.");
+    RCLCPP_INFO(
+      this->get_logger(),
+      "Received first motor-state telemetry sample.");
   }
 
   if (motor_state_publisher_) {
@@ -349,7 +375,9 @@ void VescNode::handle_motor_state_sample(const goat_vesc::VescMotorState& sample
   }
 }
 
-sensor_msgs::msg::Imu VescNode::to_imu_message(const goat_vesc::VescIMUData& sample) const {
+sensor_msgs::msg::Imu
+VescNode::to_imu_message(const goat_vesc::VescIMUData & sample) const
+{
   sensor_msgs::msg::Imu message;
   message.header.stamp = stamp_from_ns(sample.stamp_ns);
   message.header.frame_id = resolved_imu_frame_id();
@@ -363,8 +391,9 @@ sensor_msgs::msg::Imu VescNode::to_imu_message(const goat_vesc::VescIMUData& sam
   return message;
 }
 
-goat_vesc_ros::msg::VescMotorState
-VescNode::to_motor_state_message(const goat_vesc::VescMotorState& sample) const {
+goat_vesc_ros::msg::VescMotorState VescNode::to_motor_state_message(
+  const goat_vesc::VescMotorState & sample) const
+{
   goat_vesc_ros::msg::VescMotorState message;
   message.header.stamp = stamp_from_ns(sample.stamp_ns);
   message.header.frame_id = params_.frame_id;
@@ -381,15 +410,20 @@ VescNode::to_motor_state_message(const goat_vesc::VescMotorState& sample) const 
   return message;
 }
 
-builtin_interfaces::msg::Time VescNode::stamp_from_ns(std::uint64_t stamp_ns) const {
+builtin_interfaces::msg::Time
+VescNode::stamp_from_ns(std::uint64_t stamp_ns) const
+{
   if (stamp_ns == 0U) {
     return this->now();
   }
 
-  return rclcpp::Time(static_cast<rcl_time_point_value_t>(stamp_ns), RCL_SYSTEM_TIME);
+  return rclcpp::Time(
+    static_cast<rcl_time_point_value_t>(stamp_ns),
+    RCL_SYSTEM_TIME);
 }
 
-const std::string& VescNode::resolved_imu_frame_id() const {
+const std::string & VescNode::resolved_imu_frame_id() const
+{
   if (!params_.imu_frame_id.empty()) {
     return params_.imu_frame_id;
   }

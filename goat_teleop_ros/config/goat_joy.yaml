@@ -1,0 +1,9 @@
+goat_joy:
+  ros__parameters:
+    throttle_axis: 1
+    steering_axis: 0
+    enable_button: 4
+    throttle_scale: 1.0
+    steering_scale: 1.0
+    invert_throttle: false
+    invert_steering: false

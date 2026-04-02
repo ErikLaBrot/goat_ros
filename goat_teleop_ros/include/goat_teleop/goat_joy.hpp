@@ -18,13 +18,17 @@ private:
   double getAxisValue(const sensor_msgs::msg::Joy &msg, int index,
                       bool invert) const;
   bool isButtonPressed(const sensor_msgs::msg::Joy &msg, int index) const;
-  void publishCommand(double command);
+  double getServoPosition(const sensor_msgs::msg::Joy &msg) const;
+  void publishCommand(double command, double servo_position);
 
   int throttle_axis_;
+  int steering_axis_;
   int enable_button_;
   double command_scale_;
   bool invert_throttle_;
-  double servo_position_;
+  bool invert_steering_;
+  double servo_center_;
+  double servo_amplitude_;
   std::string command_topic_;
 
   rclcpp::Subscription<sensor_msgs::msg::Joy>::SharedPtr joy_subscription_;

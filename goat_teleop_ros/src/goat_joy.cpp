@@ -10,18 +10,24 @@ namespace goat_teleop {
 GoatJoy::GoatJoy(const rclcpp::NodeOptions &options)
     : Node("goat_joy", options) {
   throttle_axis_ = this->declare_parameter<int>("throttle_axis", 1);
+  steering_axis_ = this->declare_parameter<int>("steering_axis", 3);
   enable_button_ = this->declare_parameter<int>("enable_button", 4);
   command_scale_ = this->declare_parameter<double>("command_scale", 0.10);
   invert_throttle_ = this->declare_parameter<bool>("invert_throttle", false);
-  servo_position_ = this->declare_parameter<double>("servo_position", 0.5);
+  invert_steering_ = this->declare_parameter<bool>("invert_steering", false);
+  servo_center_ = this->declare_parameter<double>("servo_center", 0.5);
+  servo_amplitude_ = this->declare_parameter<double>("servo_amplitude", 0.1);
   command_topic_ =
       this->declare_parameter<std::string>("command_topic", "cmd/vesc");
 
   if (command_scale_ < 0.0) {
     throw std::invalid_argument("command_scale must be non-negative");
   }
-  if (servo_position_ < 0.0 || servo_position_ > 1.0) {
-    throw std::invalid_argument("servo_position must be within [0.0, 1.0]");
+  if (servo_center_ < 0.0 || servo_center_ > 1.0) {
+    throw std::invalid_argument("servo_center must be within [0.0, 1.0]");
+  }
+  if (servo_amplitude_ < 0.0) {
+    throw std::invalid_argument("servo_amplitude must be non-negative");
   }
   if (command_topic_.empty()) {
     throw std::invalid_argument("command_topic must not be empty");
@@ -37,15 +43,17 @@ GoatJoy::GoatJoy(const rclcpp::NodeOptions &options)
 
 void GoatJoy::joyCallback(const sensor_msgs::msg::Joy::SharedPtr msg) {
   double command = 0.0;
+  double servo_position = servo_center_;
 
   if (isButtonPressed(*msg, enable_button_)) {
     const double throttle =
         getAxisValue(*msg, throttle_axis_, invert_throttle_);
     command =
         std::clamp(throttle * command_scale_, -command_scale_, command_scale_);
+    servo_position = getServoPosition(*msg);
   }
 
-  publishCommand(command);
+  publishCommand(command, servo_position);
 }
 
 double GoatJoy::getAxisValue(const sensor_msgs::msg::Joy &msg, int index,
@@ -67,12 +75,18 @@ bool GoatJoy::isButtonPressed(const sensor_msgs::msg::Joy &msg,
   return msg.buttons[static_cast<std::size_t>(index)] != 0;
 }
 
-void GoatJoy::publishCommand(double command) {
+double GoatJoy::getServoPosition(const sensor_msgs::msg::Joy &msg) const {
+  const double steering =
+      getAxisValue(msg, steering_axis_, invert_steering_);
+  return std::clamp(servo_center_ + (steering * servo_amplitude_), 0.0, 1.0);
+}
+
+void GoatJoy::publishCommand(double command, double servo_position) {
   goat_vesc_ros::msg::VescControlCommand message;
   message.stamp = this->get_clock()->now();
   message.drive_mode = goat_vesc_ros::msg::VescControlCommand::MODE_DUTY;
   message.drive_value = static_cast<float>(command);
-  message.servo_position = static_cast<float>(servo_position_);
+  message.servo_position = static_cast<float>(servo_position);
   command_publisher_->publish(message);
 }
 

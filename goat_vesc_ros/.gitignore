@@ -1,0 +1,38 @@
+# AI / agent artifacts
+/.agents/
+/.claude/
+/.codex/
+/AGENTS.md
+/CLAUDE.md
+
+# Local editor / IDE files
+/.idea/
+/.vscode/
+*.code-workspace
+*.swp
+*.swo
+*~
+
+# OS-generated files
+.DS_Store
+Thumbs.db
+
+# Local build and generated artifacts
+/build/
+/install/
+/log/
+/compile_commands.json
+*.o
+*.obj
+*.so
+*.a
+*.pyc
+*.pyo
+__pycache__/
+*.egg-info/
+.pytest_cache/
+.cache/
+
+# Coverage and test output
+.coverage
+coverage.xml

@@ -13,6 +13,7 @@
 | Launch File | Purpose | Notes |
 | --- | --- | --- |
 | `launch/goat_vesc.launch.py` | Starts the `vesc_node` ROS node with the package default parameter file. | Loads `config/goat_vesc.yaml` and runs the node as `goat_vesc_ros`. |
+| `launch/goat_vesc_duty_smoke.launch.py` | Starts the `vesc_node` ROS node with the default config plus a duty-mode smoke-test overlay. | Loads `config/goat_vesc.yaml` first, then `config/goat_vesc_duty_smoke.yaml`. |
 
 ## Example Startup
 
@@ -25,4 +26,13 @@ docker compose -f docker/compose.yaml exec ros-humble bash -lc \
   "source /opt/ros/humble/setup.bash && \
    source /workspace/goat_racer/ros_ws/install/setup.bash && \
    ros2 launch goat_vesc_ros goat_vesc.launch.py"
+```
+
+For the Xbox duty-mode smoke test, keep the real serial `device_path` in `config/goat_vesc.yaml` and use the dedicated smoke launch:
+
+```bash
+docker compose -f docker/compose.yaml exec ros-humble bash -lc \
+  "source /opt/ros/humble/setup.bash && \
+   source /workspace/goat_racer/ros_ws/install/setup.bash && \
+   ros2 launch goat_vesc_ros goat_vesc_duty_smoke.launch.py"
 ```

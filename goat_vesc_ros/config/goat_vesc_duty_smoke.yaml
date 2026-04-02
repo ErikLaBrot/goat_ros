@@ -1,0 +1,4 @@
+goat_vesc_ros:
+  ros__parameters:
+    command_topic: "cmd/vesc"
+    command_mode: "duty"

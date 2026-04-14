@@ -1,0 +1,27 @@
+goat_vesc_ros:
+  ros__parameters:
+    # Replace this with the stable by-id path for the vehicle's VESC.
+    device_path: "/dev/ttyACM0"
+    baud: 115200
+    auto_connect: true
+    auto_reconnect: true
+    reconnect_period_ms: 1000
+
+    imu_poll_interval_ms: 10
+    motor_poll_interval_ms: 50
+    poll_response_timeout_ms: 20
+    query_guard_window_ms: 5
+
+    # These watchdog settings are forwarded to goat_vesc for drive-side safety only.
+    command_watchdog_timeout_ms: 0
+    command_watchdog_action: "disabled"
+    max_brake_current: 0.0
+    command_watchdog_brake_current: 0.0
+
+    publish_imu: true
+    publish_motor_state: true
+    frame_id: "base_link"
+    imu_frame_id: ""
+
+    # Canonical actuator command topic using goat_vesc_ros/msg/VescControlCommand.
+    command_topic: "cmd/vesc"

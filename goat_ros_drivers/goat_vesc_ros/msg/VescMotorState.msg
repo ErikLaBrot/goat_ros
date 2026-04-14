@@ -1,0 +1,11 @@
+std_msgs/Header header
+float32 rpm
+float32 current_motor
+float32 current_in
+float32 duty_cycle
+float32 vin
+float32 temp_motor
+float32 temp_fet
+int32 tachometer
+int32 tachometer_abs
+uint8 fault_code

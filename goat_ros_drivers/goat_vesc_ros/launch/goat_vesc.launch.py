@@ -1,3 +1,23 @@
+"""Launch the GOAT VESC ROS adapter node.
+
+Purpose:
+    Start `goat_vesc_ros` with a parameter file that points the node at the
+    expected VESC device and telemetry settings.
+
+Inputs:
+    The `config_file` launch argument and the installed `goat_vesc_ros` package
+    share directory.
+
+Outputs:
+    Starts the `goat_vesc_ros` node and loads its configured ROS parameters.
+
+Usage:
+    ros2 launch goat_vesc_ros goat_vesc.launch.py
+
+Notes:
+    The selected parameter file must set `device_path` for the target VESC.
+"""
+
 # Copyright 2026 GOAT Maintainers
 
 import os
@@ -10,6 +30,7 @@ from launch_ros.actions import Node
 
 
 def generate_launch_description():
+    """Build the launch description for the VESC ROS adapter node."""
     default_config_file = os.path.join(
         get_package_share_directory("goat_vesc_ros"),
         "config",

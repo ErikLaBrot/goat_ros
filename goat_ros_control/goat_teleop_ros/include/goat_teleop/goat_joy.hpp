@@ -1,3 +1,8 @@
+/**
+ * @file goat_joy.hpp
+ * @brief Public declaration for the GOAT joystick teleop node.
+ */
+
 #ifndef GOAT_TELEOP__GOAT_JOY_HPP_
 #define GOAT_TELEOP__GOAT_JOY_HPP_
 
@@ -9,8 +14,20 @@
 
 namespace goat_teleop {
 
+/**
+ * @brief ROS node that converts joystick input into VESC control commands.
+ *
+ * The node consumes `sensor_msgs/msg/Joy` input, applies the configured axis
+ * mapping and scaling, and publishes `goat_vesc_ros/msg/VescControlCommand`
+ * messages for manual teleoperation.
+ */
 class GoatJoy : public rclcpp::Node {
 public:
+  /**
+   * @brief Construct the joystick teleop node with ROS node options.
+   *
+   * @param options ROS node options used during node creation.
+   */
   explicit GoatJoy(const rclcpp::NodeOptions &options = rclcpp::NodeOptions());
 
 private:

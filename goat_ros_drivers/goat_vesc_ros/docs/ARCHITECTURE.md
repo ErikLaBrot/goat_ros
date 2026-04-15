@@ -1,74 +1,103 @@
-# goat_vesc Architecture Notes
+# goat_vesc_ros Architecture Notes
 
-This document is the implementation-side companion to the public API docs for
-the GOAT racer VESC transport layer. The public headers describe what the
-library exposes. This page explains the core subsystems and the invariants that
-shape the implementation.
+This document describes the ROS-facing architecture of `goat_vesc_ros`. The
+package is intentionally small: it wraps one `goat_vesc::VescClient`, owns the
+ROS interfaces around that client, and leaves teleop and vehicle-level control
+policy to other packages.
 
-## Transport Ownership
+## Node Responsibilities
 
-`goat_vesc::VescClient` owns the serial transport and keeps all reads and writes
-on a single background thread. Public methods can be called from multiple
-threads, but they do not write directly to the file descriptor. Instead they:
+`goat_vesc_ros::VescNode` owns:
 
-- build packets under `protocol_mutex_`
-- hand queued work to the scheduler under `scheduler_mutex_`
-- wake the transport thread through `wake_pipe_`
+- ROS parameters and their validation
+- ROS publishers, subscriptions, and launch-time configuration
+- the single `goat_vesc::VescClient` instance used by the node
+- connection state tracking and reconnect attempts
+- conversion between driver types and ROS message types
 
-This keeps byte-stream ownership centralized and avoids interleaving writes from
-multiple callers.
+The node does not own:
 
-## Scheduling and Query Arbitration
+- joystick or higher-level teleop mapping
+- autonomy or vehicle-level control logic
+- a ROS-managed steering timeout policy
+- timer-driven republishing of cached telemetry
 
-The I/O loop handles three categories of work:
+## Startup And Interface Creation
 
-1. fire-and-forget control commands
-2. periodic IMU and motor-state polls
-3. blocking reply-bearing queries such as firmware version requests
+Construction follows a fixed order:
 
-The scheduler enforces one in-flight reply-bearing request at a time so replies
-can be matched by expected packet ID without a more complicated correlator.
-Control commands have priority over polls and queries. Polls are scheduled from
-their own channels, and IMU polling wins ties over motor-state polling.
+1. declare ROS parameters
+2. load and validate them into the local `Parameters` struct
+3. build the `goat_vesc::VescConfig`
+4. construct the `goat_vesc::VescClient`
+5. create ROS publishers, subscriptions, and the reconnect timer
+6. log the effective startup configuration
+7. attempt the initial connection when `auto_connect` is enabled
 
-One-shot queries are delayed or timed out rather than allowed to permanently
-disturb periodic polling. Late replies from timed-out blocking queries are
-counted and dropped so a stale response cannot satisfy a newer request.
+This keeps parameter validation ahead of driver creation and ensures the node's
+ROS interfaces exist before telemetry or reconnect activity begins.
 
-## Protocol Layering
+## Command Path
 
-The wire-format code is split into three public pieces:
+The subscribed actuator input is `goat_vesc_ros/msg/VescControlCommand` on the
+configured `command_topic`.
 
-- `VescPacketBuilder` serializes typed integer fields into payload bytes
-- `VescPacketParser` consumes raw bytes and emits validated payload frames
-- `VescProtocol` builds typed requests and parses typed responses
+The command handler:
 
-`VescClient` depends on these pieces but does not own the byte-layout details of
-individual messages. That separation keeps transport logic independent from
-packet layout and message semantics.
+- rejects non-finite `drive_value` or `servo_position`
+- rejects any `drive_mode` other than `MODE_DUTY`
+- rejects commands while the node believes the client is disconnected
+- clamps `drive_value` to `[-1.0, 1.0]`
+- clamps `servo_position` to `[0.0, 1.0]`
+- forwards the values to `goat_vesc::VescClient::set_duty()` and
+  `goat_vesc::VescClient::set_servo_pos()`
 
-## Watchdog and Safety Model
+The command timestamp is accepted for upstream bookkeeping only. It is not used
+for timeout logic inside `goat_vesc_ros`.
 
-The optional command watchdog is a host-side safety mechanism for GOAT
-bridge-style control loops. Each accepted control command can arm or refresh a
-deadline. When the deadline expires, the library sends one safe-stop command
-chosen by configuration:
+## Telemetry Path
 
-- coast by commanding zero current
-- active brake by commanding bounded brake current
+Telemetry publication is event-driven from `goat_vesc` callbacks rather than
+from ROS timers.
 
-The watchdog is intentionally one-shot. It does not replace VESC-side timeout
-configuration, and it cannot send a final command after the transport has
-already failed.
+- IMU samples are converted into `sensor_msgs/msg/Imu` and published on
+  `imu/data_raw`
+- motor-state samples are converted into
+  `goat_vesc_ros/msg/VescMotorState` and published on `motor_state`
 
-## Caches and Callbacks
+On the first sample of each type, the node logs that telemetry has started.
+Incoming driver timestamps are converted into ROS time when present; otherwise
+the node falls back to `now()`.
 
-Decoded telemetry samples are timestamped in the I/O thread, copied into
-latest-value caches, and then published to subscriber callbacks outside the
-cache lock. This gives callers two access patterns:
+## Connection And Reconnect Model
 
-- pull-based reads through `latest_imu()` and `latest_motor_state()`
-- push-based updates through subscriptions
+`goat_vesc_ros` treats connection management as a node responsibility.
 
-Callbacks are copied out of the registry before invocation so user code does not
-run while the registry mutex is held.
+- `auto_connect` controls whether startup attempts an immediate connection
+- `auto_reconnect` controls whether the reconnect timer retries after
+  disconnects
+- `reconnect_period_ms` controls the timer cadence
+
+The node keeps an atomic `connected_` view so command rejection and warning
+behavior can stay lightweight. A failed command path does not trigger a
+reconnect directly; reconnects happen through the timer path.
+
+## Parameter Boundary
+
+Most transport-facing configuration is passed through directly to `goat_vesc`,
+including:
+
+- poll cadences
+- reply timeout and query guard settings
+- watchdog timeout and action
+- brake-current limits
+
+ROS-specific configuration stays in the adapter node, including:
+
+- topic names
+- whether ROS publishers are created
+- frame ID selection and IMU frame fallback
+- reconnect policy and logging
+
+This keeps `goat_vesc_ros` focused on ROS integration while `goat_vesc`
+continues to own transport and protocol behavior.

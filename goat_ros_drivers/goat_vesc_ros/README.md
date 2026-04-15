@@ -56,12 +56,19 @@ configuration inside one node.
 
 ## Example Usage
 
-Update `config/goat_vesc.yaml` so `device_path` points at the correct VESC
-serial device, then start the node from the `goat_racer` repo root:
+For the default end-to-end controller demo, update `config/goat_vesc.yaml` so
+`device_path` points at the correct VESC serial device, then work from the
+`goat_racer` repo root:
 
 ```bash
-cd ../goat_racer
-scripts/ros up
+scripts/ros bootstrap
+scripts/demo
+```
+
+For driver-only bringup or debugging, start only the adapter node inside the
+shared container:
+
+```bash
 docker compose -f docker/compose.yaml exec ros-humble bash -lc \
   "source /opt/ros/humble/setup.bash && \
    source /workspace/goat_racer/ros_ws/install/setup.bash && \

@@ -36,6 +36,7 @@
 ## Launch Entry Points
 
 - `goat_joy.launch.py`: Starts `joy_node` plus `goat_joy` for manual smoke tests. Accepts `config_file`, `joy_dev`, and `deadzone` launch arguments.
+- `controller_demo.launch.py`: Starts `goat_vesc_ros`, `joy_node`, and `goat_joy` together for the default controller bringup path. Accepts `vesc_config_file`, `teleop_config_file`, `joy_dev`, and `deadzone` launch arguments.
 
 ## Dependencies
 
@@ -45,24 +46,32 @@
 
 ## Example Usage
 
-From the `goat_racer` repo root:
+For the default end-to-end controller demo, work from the `goat_racer` repo
+root:
 
 ```bash
-cd ../goat_racer
-scripts/ros up
+scripts/ros bootstrap
+scripts/demo
+```
+
+Before running the combined demo, update the `goat_vesc_ros` parameter file so
+`device_path` points at the correct VESC serial device.
+
+Override the joystick device or deadzone at launch time when needed through the
+workspace helper:
+
+```bash
+scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+```
+
+To launch teleop without the VESC adapter, start only the teleop package inside
+the shared container:
+
+```bash
 docker compose -f docker/compose.yaml exec ros-humble bash -lc \
   "source /opt/ros/humble/setup.bash && \
    source /workspace/goat_racer/ros_ws/install/setup.bash && \
    ros2 launch goat_teleop goat_joy.launch.py"
-```
-
-Override the joystick device or deadzone at launch time when needed:
-
-```bash
-docker compose -f docker/compose.yaml exec ros-humble bash -lc \
-  "source /opt/ros/humble/setup.bash && \
-   source /workspace/goat_racer/ros_ws/install/setup.bash && \
-   ros2 launch goat_teleop goat_joy.launch.py joy_dev:=/dev/input/js1 deadzone:=0.02"
 ```
 
 ## Rules

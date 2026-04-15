@@ -1,89 +1,78 @@
 # goat_vesc_ros
 
-`goat_vesc_ros` is a thin ROS 2 Humble adapter around `goat_vesc`. It owns one `goat_vesc::VescClient`, translates ROS messages into driver calls, republishes driver telemetry into ROS, and keeps reconnect behavior and ROS-facing configuration inside one plain node.
+## Purpose
 
-## Node
+`goat_vesc_ros` is a ROS 2 Humble adapter around `goat_vesc`. It owns one
+`goat_vesc::VescClient`, translates ROS messages into driver calls, republishes
+driver telemetry into ROS, and keeps reconnect behavior plus ROS-facing
+configuration inside one node.
 
-- Name: `goat_vesc_ros`
-- Purpose: expose a small ROS interface for actuator commands, IMU telemetry, and motor-state telemetry
-- Owns: ROS parameters, publishers/subscribers, reconnect policy, and message-to-driver conversion
-- Does not own: teleop logic, vehicle-level control, autonomy, timer-driven telemetry publication, or ROS-managed steering timeout behavior
+## Nodes
+
+### `goat_vesc_ros`
+- Purpose: Expose ROS interfaces for actuator commands, IMU telemetry, and motor-state telemetry backed by `goat_vesc`.
+- Executable: `vesc_node`
+- Notes: The command path currently accepts only `goat_vesc_ros/msg/VescControlCommand` with `MODE_DUTY`. `drive_value` is clamped to `[-1.0, 1.0]`, `servo_position` is clamped to `[0.0, 1.0]`, telemetry publishing is event-driven from `goat_vesc` callbacks, and reconnect attempts run from the node timer when `auto_reconnect` is enabled.
 
 ## Topics
 
-| Topic | Type | Direction | Semantics |
-| --- | --- | --- | --- |
-| `cmd/vesc` | `goat_vesc_ros/msg/VescControlCommand` | subscribed | Canonical actuator command topic. In v1 only `MODE_DUTY` is accepted. `drive_value` is normalized duty and `servo_position` is normalized servo position. |
-| `imu/data_raw` | `sensor_msgs/msg/Imu` | published | IMU samples forwarded directly from `goat_vesc` IMU callbacks. |
-| `motor_state` | `goat_vesc_ros/msg/VescMotorState` | published | Motor-state samples forwarded directly from `goat_vesc` motor-state callbacks. |
+### Subscribed Topics
+- `cmd/vesc` (`goat_vesc_ros/msg/VescControlCommand`): Canonical actuator command input. `stamp` is informational only, `drive_mode` must be `MODE_DUTY`, `drive_value` maps to `goat_vesc::VescClient::set_duty()`, and `servo_position` maps to `goat_vesc::VescClient::set_servo_pos()`.
 
-## Messages
-
-### `goat_vesc_ros/msg/VescControlCommand`
-
-- `stamp`: ROS timestamp carried with the command for upstream bookkeeping; informational only in this refactor
-- `MODE_DUTY=1`: only supported `drive_mode` in v1
-- `drive_mode`: drive command schema selector
-- `drive_value`: normalized drive command, clamped to `[-1.0, 1.0]` before calling `goat_vesc::VescClient::set_duty()`
-- `servo_position`: normalized servo command, clamped to `[0.0, 1.0]` before calling `goat_vesc::VescClient::set_servo_pos()`
-
-### `goat_vesc_ros/msg/VescMotorState`
-
-- `header`
-- `rpm`
-- `current_motor`
-- `current_in`
-- `duty_cycle`
-- `vin`
-- `temp_motor`
-- `temp_fet`
-- `tachometer`
-- `tachometer_abs`
-- `fault_code`
+### Published Topics
+- `imu/data_raw` (`sensor_msgs/msg/Imu`): IMU samples forwarded from `goat_vesc` callbacks. The ROS message currently carries angular velocity, linear acceleration, timestamps, and frame IDs; orientation is left unspecified.
+- `motor_state` (`goat_vesc_ros/msg/VescMotorState`): Motor telemetry forwarded from `goat_vesc` callbacks, including `rpm`, `current_motor`, `current_in`, `duty_cycle`, `vin`, `temp_motor`, `temp_fet`, `tachometer`, `tachometer_abs`, and `fault_code`.
 
 ## Parameters
 
-| Parameter | Type | Default | Meaning |
-| --- | --- | --- | --- |
-| `device_path` | `string` | `""` | Serial path passed to `goat_vesc`. |
-| `baud` | `int` | `115200` | Serial baud rate for the VESC connection. |
-| `auto_connect` | `bool` | `true` | Attempt connection during startup. |
-| `auto_reconnect` | `bool` | `true` | Retry connection on the reconnect timer when disconnected. |
-| `reconnect_period_ms` | `int` | `1000` | Reconnect timer period in milliseconds. |
-| `imu_poll_interval_ms` | `int` | `10` | IMU query cadence forwarded to `goat_vesc`. `0` disables polling. |
-| `motor_poll_interval_ms` | `int` | `50` | Motor-state query cadence forwarded to `goat_vesc`. `0` disables polling. |
-| `poll_response_timeout_ms` | `int` | `20` | Reply timeout forwarded to `goat_vesc`. |
-| `query_guard_window_ms` | `int` | `5` | Query guard window forwarded to `goat_vesc`. |
-| `command_watchdog_timeout_ms` | `int` | `0` | Drive-side watchdog timeout forwarded to `goat_vesc`. `0` disables it. |
-| `command_watchdog_action` | `string` | `"disabled"` | Drive-side watchdog action forwarded to `goat_vesc`: `disabled`, `coast`, or `brake_current`. |
-| `max_brake_current` | `double` | `0.0` | Maximum brake current used by the drive-side watchdog. |
-| `command_watchdog_brake_current` | `double` | `0.0` | Requested watchdog brake current before clamping in `goat_vesc`. |
-| `publish_imu` | `bool` | `true` | Create and publish the IMU topic. |
-| `publish_motor_state` | `bool` | `true` | Create and publish the motor-state topic. |
-| `frame_id` | `string` | `"base_link"` | Default frame used for motor-state and IMU messages. |
-| `imu_frame_id` | `string` | `""` | Optional IMU-specific frame. When empty, `frame_id` is used. |
-| `command_topic` | `string` | `"cmd/vesc"` | ROS topic name for `VescControlCommand` input. |
+- `device_path` (`string`, default: `""`): Serial device path passed to `goat_vesc`. Set this to the stable VESC device path before field use.
+- `baud` (`int`, default: `115200`): Serial baud rate for the VESC connection.
+- `auto_connect` (`bool`, default: `true`): Attempt the initial VESC connection during startup.
+- `auto_reconnect` (`bool`, default: `true`): Retry connection on the reconnect timer when disconnected.
+- `reconnect_period_ms` (`int`, default: `1000`): Reconnect timer cadence in milliseconds.
+- `imu_poll_interval_ms` (`int`, default: `10`): IMU poll cadence forwarded to `goat_vesc`. `0` disables IMU polling.
+- `motor_poll_interval_ms` (`int`, default: `50`): Motor-state poll cadence forwarded to `goat_vesc`. `0` disables motor polling.
+- `poll_response_timeout_ms` (`int`, default: `20`): Reply timeout forwarded to `goat_vesc`.
+- `query_guard_window_ms` (`int`, default: `5`): Query guard window forwarded to `goat_vesc`.
+- `command_watchdog_timeout_ms` (`int`, default: `0`): Drive-side watchdog timeout forwarded to `goat_vesc`. `0` disables it.
+- `command_watchdog_action` (`string`, default: `"disabled"`): Drive-side watchdog action forwarded to `goat_vesc`: `disabled`, `coast`, or `brake_current`.
+- `max_brake_current` (`double`, default: `0.0`): Maximum brake current allowed by the forwarded watchdog configuration.
+- `command_watchdog_brake_current` (`double`, default: `0.0`): Requested watchdog brake current before clamping in `goat_vesc`.
+- `publish_imu` (`bool`, default: `true`): Create and publish the IMU topic.
+- `publish_motor_state` (`bool`, default: `true`): Create and publish the motor-state topic.
+- `frame_id` (`string`, default: `"base_link"`): Default frame used for motor-state messages and as the IMU fallback frame.
+- `imu_frame_id` (`string`, default: `""`): Optional IMU-specific frame ID. When empty, `frame_id` is used.
+- `command_topic` (`string`, default: `"cmd/vesc"`): ROS topic name for `VescControlCommand` input.
 
-## Behavioral Notes
+## Launch Entry Points
 
-- Telemetry is event-driven. `goat_vesc_ros` publishes IMU and motor-state messages when `goat_vesc` invokes its callbacks; there is no ROS timer republishing cached telemetry.
-- Reconnect behavior stays in the node. If startup connection fails or an active connection drops, the node retries on the reconnect timer when `auto_reconnect` is enabled.
-- The watchdog parameters are passed through to `goat_vesc` and apply to drive-side stale-command behavior only. `goat_vesc_ros` does not implement ROS-owned steering timeout logic.
-- Teleop or vehicle-level control mapping belongs in another package. This node expects already-decided actuator commands.
+- `goat_vesc.launch.py`: Starts `vesc_node` and loads parameters from `config/goat_vesc.yaml`. Accepts a `config_file` launch argument when you need an alternate parameter file.
 
-## Launch
+## Dependencies
 
-`launch/goat_vesc.launch.py` starts `vesc_node` with `config/goat_vesc.yaml`.
+- ROS packages: `builtin_interfaces`, `rclcpp`, `sensor_msgs`, `std_msgs`, `launch`, `launch_ros`
+- External libraries: installed `goat_vesc` package
+- Runtime assumptions: A reachable VESC serial device and a parameter file that points `device_path` at the correct interface
 
-## Example Startup
+## Example Usage
 
-Update `config/goat_vesc.yaml` so `device_path` points at the correct VESC serial device, then start the node from the `goat_racer` repo root:
+These examples assume `goat_vesc_ros` is available in the current ROS
+environment.
+
+Update `config/goat_vesc.yaml` so `device_path` points at the correct VESC
+serial device, then launch the adapter node:
 
 ```bash
-cd ../goat_racer
-scripts/ros up
-docker compose -f docker/compose.yaml exec ros-humble bash -lc \
-  "source /opt/ros/humble/setup.bash && \
-   source /workspace/goat_racer/ros_ws/install/setup.bash && \
-   ros2 launch goat_vesc_ros goat_vesc.launch.py"
+ros2 launch goat_vesc_ros goat_vesc.launch.py
 ```
+
+Use an alternate parameter file when needed:
+
+```bash
+ros2 launch goat_vesc_ros goat_vesc.launch.py config_file:=/path/to/goat_vesc.yaml
+```
+
+## Rules
+
+- Topic names, parameter names, launch files, and examples in this README should match the installed package.
+- `goat_vesc_ros` owns the ROS message semantics described here; the `.msg` files intentionally remain minimal.

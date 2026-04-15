@@ -2,9 +2,12 @@
 
 `goat_ros_drivers` groups ROS 2 driver-facing packages for the GOAT platform.
 
-Current packages:
+## Packages
 
 - `goat_vesc_ros`
+  ROS adapter node for the `goat_vesc` VESC transport library.
 
-These packages are intended to be built through the sibling-repo orchestration
-in `goat_racer`.
+## Usage
+
+Build these packages as part of a ROS 2 workspace that also provides the
+installed `goat_vesc` dependency used by `goat_vesc_ros`.

@@ -1,3 +1,23 @@
+"""Launch the GOAT joystick teleop stack.
+
+Purpose:
+    Start `joy_node` and the `goat_joy` teleop node with a shared parameter
+    file for manual joystick smoke tests.
+
+Inputs:
+    `config_file`, `joy_dev`, and `deadzone` launch arguments plus the
+    installed `goat_teleop` package share directory.
+
+Outputs:
+    Starts the ROS nodes and loads their launch-time parameters.
+
+Usage:
+    ros2 launch goat_teleop goat_joy.launch.py
+
+Notes:
+    Intended for operator-driven teleop tests that publish `cmd/vesc`.
+"""
+
 import os
 
 from ament_index_python.packages import get_package_share_directory
@@ -9,6 +29,7 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
+    """Build the launch description for joystick teleop smoke tests."""
     default_config_file = os.path.join(
         get_package_share_directory("goat_teleop"),
         "config",

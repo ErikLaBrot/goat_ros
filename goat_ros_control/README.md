@@ -2,9 +2,12 @@
 
 `goat_ros_control` groups ROS 2 control-facing packages for the GOAT platform.
 
-Current packages:
+## Packages
 
-- `goat_teleop_ros`
+- `goat_teleop` in `goat_teleop_ros/`
+  Manual joystick teleop path that publishes VESC control commands.
 
-These packages are intended to be built through the sibling-repo orchestration
-in `goat_racer`.
+## Usage
+
+Build these packages as part of a ROS 2 workspace that provides the ROS
+dependencies required by the contained packages.

@@ -7,7 +7,7 @@
 - `goat_vesc_ros`
   ROS adapter node for the `goat_vesc` VESC transport library.
 
-## Workspace Usage
+## Usage
 
-These packages are intended to be checked out under the unified `goat_ros`
-repository and built through the sibling-repo orchestration in `goat_racer`.
+Build these packages as part of a ROS 2 workspace that also provides the
+installed `goat_vesc` dependency used by `goat_vesc_ros`.

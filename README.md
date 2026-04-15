@@ -1,8 +1,8 @@
 # goat_ros
 
-`goat_ros` is the unified ROS repository for the GOAT racer workspace. It
-collects the platform-facing ROS 2 packages that are built together from the
-`goat_racer` workspace.
+`goat_ros` collects the ROS 2 packages for the GOAT platform. It groups the
+control-facing and driver-facing packages that provide the ROS interfaces for
+teleop, actuator commands, and telemetry.
 
 ## Repository Layout
 
@@ -20,9 +20,7 @@ collects the platform-facing ROS 2 packages that are built together from the
   ROS adapter around `goat_vesc` for actuator commands and telemetry
   publishing.
 
-## Workspace Usage
+## Usage
 
-This repository is intended to be checked out under `goat_racer/ros_ws/src/`
-and built through the shared `goat_racer/scripts/ros` workflow so it can
-resolve the sibling `goat_vesc` dependency and write artifacts into the shared
-workspace layout.
+Build these packages as part of a ROS 2 workspace that also makes the
+`goat_vesc` dependency available to `goat_vesc_ros`.

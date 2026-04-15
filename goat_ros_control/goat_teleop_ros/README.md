@@ -46,32 +46,31 @@
 
 ## Example Usage
 
-For the default end-to-end controller demo, work from the `goat_racer` repo
-root:
+These examples assume `goat_teleop` is available in the current ROS
+environment.
 
 ```bash
-scripts/ros bootstrap
-scripts/demo
+ros2 launch goat_teleop goat_joy.launch.py
 ```
 
-Before running the combined demo, update the `goat_vesc_ros` parameter file so
-`device_path` points at the correct VESC serial device.
-
-Override the joystick device or deadzone at launch time when needed through the
-workspace helper:
+Launch the package-owned combined demo entrypoint when you want to start both
+teleop and the sibling VESC adapter launch flow together:
 
 ```bash
-scripts/demo joy_dev:=/dev/input/js1 deadzone:=0.02
+ros2 launch goat_teleop controller_demo.launch.py
 ```
 
-To launch teleop without the VESC adapter, start only the teleop package inside
-the shared container:
+Override the joystick device or deadzone at launch time when needed:
 
 ```bash
-docker compose -f docker/compose.yaml exec ros-humble bash -lc \
-  "source /opt/ros/humble/setup.bash && \
-   source /workspace/goat_racer/ros_ws/install/setup.bash && \
-   ros2 launch goat_teleop goat_joy.launch.py"
+ros2 launch goat_teleop goat_joy.launch.py joy_dev:=/dev/input/js1 deadzone:=0.02
+```
+
+Use the package executable directly when you do not need the bundled launch
+configuration:
+
+```bash
+ros2 run goat_teleop goat_joy
 ```
 
 ## Rules

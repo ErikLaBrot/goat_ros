@@ -7,7 +7,7 @@
 - `goat_teleop` in `goat_teleop_ros/`
   Manual joystick teleop path that publishes VESC control commands.
 
-## Workspace Usage
+## Usage
 
-These packages are intended to be checked out under the unified `goat_ros`
-repository and built through the sibling-repo orchestration in `goat_racer`.
+Build these packages as part of a ROS 2 workspace that provides the ROS
+dependencies required by the contained packages.

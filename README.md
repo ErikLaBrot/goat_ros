@@ -1,8 +1,8 @@
 # goat_ros
 
 `goat_ros` collects the ROS 2 packages for the GOAT platform. It groups the
-control-facing and driver-facing packages that provide the ROS interfaces for
-teleop, actuator commands, and telemetry.
+control-facing, driver-facing, and launch-facing packages that provide the ROS
+interfaces for teleop, actuator commands, telemetry, and robot bringup.
 
 ## Repository Layout
 
@@ -10,6 +10,8 @@ teleop, actuator commands, and telemetry.
   Control-facing ROS packages, including joystick teleop.
 - `goat_ros_drivers/`
   Driver-facing ROS packages, including the VESC adapter node.
+- `goat_ros_launch/`
+  High-level robot bringup launch files and rosbag recording profiles.
 
 ## Packages
 
@@ -19,6 +21,9 @@ teleop, actuator commands, and telemetry.
 - `goat_vesc_ros`
   ROS adapter around `goat_vesc` for actuator commands and telemetry
   publishing.
+- `goat_ros_launch`
+  Canonical launch entrypoints for robot bringup, subsystem composition,
+  rosbag recording profiles, and bag replay.
 
 ## Usage
 

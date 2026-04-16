@@ -43,4 +43,16 @@ install(FILES package.xml
   DESTINATION share/${PROJECT_NAME}
 )
 
+if(BUILD_TESTING)
+  find_package(ament_cmake_gtest REQUIRED)
+
+  ament_add_gtest(test_input_conditioning
+    test/test_input_conditioning.cpp
+  )
+  target_include_directories(test_input_conditioning
+    PRIVATE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
+endif()
+
 ament_package()

@@ -1,6 +1,6 @@
 #include "goat_teleop/goat_joy.hpp"
+#include "goat_teleop/input_conditioning.hpp"
 
-#include <algorithm>
 #include <chrono>
 #include <cmath>
 #include <functional>
@@ -155,23 +155,13 @@ bool GoatJoy::isButtonPressed(const sensor_msgs::msg::Joy &msg,
 }
 
 double GoatJoy::applyDeadband(double value) const {
-  return std::abs(value) <= deadband_ ? 0.0 : value;
+  return input_conditioning::applyDeadband(value, deadband_);
 }
 
 double GoatJoy::conditionAxis(double target, double current, double tau_s,
                               double max_rate, double dt_s) const {
-  double filtered = target;
-  if (tau_s > 0.0) {
-    const double alpha = dt_s / (tau_s + dt_s);
-    filtered = current + (alpha * (target - current));
-  }
-
-  if (max_rate <= 0.0) {
-    return filtered;
-  }
-
-  const double max_delta = max_rate * dt_s;
-  return std::clamp(filtered, current - max_delta, current + max_delta);
+  return input_conditioning::conditionAxis(target, current, tau_s, max_rate,
+                                           dt_s);
 }
 
 void GoatJoy::resetConditionedState() {

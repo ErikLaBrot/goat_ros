@@ -11,7 +11,7 @@
 ### `goat_joy`
 - Purpose: Convert joystick axes and buttons into duty-cycle and servo commands.
 - Executable: `goat_joy`
-- Notes: Commands are only driven while the configured enable button is held. When disabled, the node publishes zero drive duty and a centered servo position. The published `goat_vesc_ros/msg/VescControlCommand` always uses `MODE_DUTY`, scales drive output by `command_scale`, and clamps steering around `servo_center` using `servo_amplitude`.
+- Notes: Commands are only driven while the configured enable button is held. When disabled, the node publishes zero drive duty and a centered servo position. The published `goat_vesc_ros/msg/VescControlCommand` always uses `MODE_DUTY`, conditions throttle and steering input before scaling, scales drive output by `command_scale`, and clamps steering around `servo_center` using `servo_amplitude`.
 
 ## Topics
 
@@ -31,7 +31,19 @@
 - `invert_steering` (`bool`, default: `false`): Invert the selected steering axis before servo conversion.
 - `servo_center` (`double`, default: `0.5`): Neutral servo position published when steering input is centered or disabled.
 - `servo_amplitude` (`double`, default: `0.1`): Steering excursion added around `servo_center` before clamping to `[0.0, 1.0]`.
+- `deadband` (`double`, default: `0.05`): Normalized throttle and steering input inside `[-deadband, deadband]` is treated as zero.
+- `steer_tau_s` (`double`, default: `0.12`): Steering first-order low-pass filter time constant in seconds. Use `0.0` to disable steering filtering.
+- `throttle_tau_s` (`double`, default: `0.18`): Throttle first-order low-pass filter time constant in seconds. Use `0.0` to disable throttle filtering.
+- `max_steer_rate` (`double`, default: `3.0`): Maximum conditioned steering change in normalized joystick units per second. Use `0.0` to disable steering slew limiting.
+- `max_throttle_rate` (`double`, default: `2.0`): Maximum conditioned throttle change in normalized joystick units per second. Use `0.0` to disable throttle slew limiting.
+- `publish_epsilon` (`double`, default: `0.001`): Output-change threshold used to suppress repeated disabled neutral commands and snap tiny centered outputs to neutral.
+- `control_rate_hz` (`double`, default: `50.0`): Timer rate used to update conditioned commands from the latest joystick sample.
 - `command_topic` (`string`, default: `"cmd/vesc"`): Output topic for `goat_vesc_ros/msg/VescControlCommand`.
+
+Deadband, filtering, and slew limiting run on normalized joystick values before
+`command_scale` and `servo_amplitude` are applied. The defaults are intended for
+manual demo driving, where small stick noise should disappear and quick stick
+steps should soften without making the vehicle feel delayed.
 
 ## Launch Entry Points
 

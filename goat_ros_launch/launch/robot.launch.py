@@ -140,7 +140,7 @@ def generate_launch_description():
     )
     bag_dir_argument = DeclareLaunchArgument(
         "bag_dir",
-        default_value=".",
+        default_value="~/.ros/goat/bags",
         description="Directory where rosbag output directories are created.",
     )
     bag_name_argument = DeclareLaunchArgument(

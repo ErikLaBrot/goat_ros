@@ -42,6 +42,11 @@ Launch arguments provide the operator-facing configuration:
 - `teleop.launch.py`: `config_file`, `joy_dev`, and `deadzone`.
 - `replay.launch.py`: `bag_path`, `rate`, and `publish_clock`.
 
+Rosbag recording stores output under `bag_dir` with a timestamped `bag_name`.
+Direct `ros2 launch` usage defaults to `~/.ros/goat/bags` so recordings do not
+land in whichever directory launched the process. Top-level GOAT demo scripts
+may pass a workspace-specific `bag_dir` when they run inside Docker.
+
 ## Launch Entry Points
 
 - `robot.launch.py`: Canonical robot bringup entrypoint. It includes sensor
@@ -76,16 +81,31 @@ Start canonical bringup with the core rosbag profile:
 ros2 launch goat_ros_launch robot.launch.py record:=true
 ```
 
+By default, that writes a bag directory like this:
+
+```text
+~/.ros/goat/bags/goat_20260415_172500
+```
+
 Record the sensor-heavy SLAM topic allowlist to MCAP:
 
 ```bash
 ros2 launch goat_ros_launch robot.launch.py record:=true record_profile:=slam
 ```
 
+Choose a different save location when needed:
+
+```bash
+ros2 launch goat_ros_launch robot.launch.py \
+  record:=true \
+  bag_dir:=/workspace/goat_racer/ros_ws/bags
+```
+
 Replay a recorded bag:
 
 ```bash
-ros2 launch goat_ros_launch replay.launch.py bag_path:=./goat_20260415_172500
+ros2 launch goat_ros_launch replay.launch.py \
+  bag_path:=~/.ros/goat/bags/goat_20260415_172500
 ```
 
 ## Rules

@@ -1,0 +1,17 @@
+# Broad diagnostics for demos, hardware smoke tests, and issue reproduction.
+/cmd/vesc
+/joy
+/imu/data_raw
+/motor_state
+/scan
+/points
+/camera/color/image_raw
+/camera/color/camera_info
+/camera/depth/image_rect_raw
+/camera/depth/camera_info
+/odom
+/tf
+/tf_static
+/diagnostics
+/parameter_events
+/rosout

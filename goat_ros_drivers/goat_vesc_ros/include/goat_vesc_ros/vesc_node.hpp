@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include <array>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -44,6 +45,12 @@ private:
     bool publish_motor_state{true};
     std::string frame_id{"base_link"};
     std::string imu_frame_id;
+    std::array<double, 3> imu_angular_velocity_covariance_diagonal{
+      {0.0, 0.0, 0.0}
+    };
+    std::array<double, 3> imu_linear_acceleration_covariance_diagonal{
+      {0.0, 0.0, 0.0}
+    };
     std::string command_topic{"cmd/vesc"};
   };
 

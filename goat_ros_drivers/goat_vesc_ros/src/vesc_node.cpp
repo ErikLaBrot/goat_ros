@@ -3,10 +3,12 @@
 #include "goat_vesc_ros/vesc_node.hpp"
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <cstdint>
 #include <stdexcept>
 #include <utility>
+#include <vector>
 
 #include "builtin_interfaces/msg/time.hpp"
 #include "rclcpp/qos.hpp"
@@ -20,6 +22,42 @@ namespace
 
 constexpr auto kDisconnectedWarnThrottle = 5000;
 constexpr auto kReconnectWarnThrottle = 5000;
+
+std::array<double, 3> load_covariance_diagonal(
+  const rclcpp::Node & node,
+  const char * parameter_name)
+{
+  const auto values = node.get_parameter(parameter_name).as_double_array();
+  if (values.size() != 3U) {
+    throw std::invalid_argument(
+            std::string(parameter_name) + " must contain exactly 3 values");
+  }
+
+  return {values[0], values[1], values[2]};
+}
+
+void validate_covariance_diagonal(
+  const std::array<double, 3> & diagonal,
+  const char * parameter_name)
+{
+  for (const double value : diagonal) {
+    if (!std::isfinite(value) || value < 0.0) {
+      throw std::invalid_argument(
+              std::string(parameter_name) +
+              " values must be finite and non-negative");
+    }
+  }
+}
+
+std::array<double, 9> covariance_matrix_from_diagonal(
+  const std::array<double, 3> & diagonal)
+{
+  return {
+    diagonal[0], 0.0, 0.0,
+    0.0, diagonal[1], 0.0,
+    0.0, 0.0, diagonal[2]
+  };
+}
 
 } // namespace
 
@@ -86,6 +124,10 @@ void VescNode::declare_parameters()
   this->declare_parameter<bool>("publish_motor_state", true);
   this->declare_parameter<std::string>("frame_id", "base_link");
   this->declare_parameter<std::string>("imu_frame_id", "");
+  this->declare_parameter<std::vector<double>>(
+    "imu_angular_velocity_covariance_diagonal", {0.0, 0.0, 0.0});
+  this->declare_parameter<std::vector<double>>(
+    "imu_linear_acceleration_covariance_diagonal", {0.0, 0.0, 0.0});
   this->declare_parameter<std::string>("command_topic", "cmd/vesc");
 }
 
@@ -119,6 +161,12 @@ VescNode::Parameters VescNode::load_parameters()
     this->get_parameter("publish_motor_state").as_bool();
   params.frame_id = this->get_parameter("frame_id").as_string();
   params.imu_frame_id = this->get_parameter("imu_frame_id").as_string();
+  params.imu_angular_velocity_covariance_diagonal =
+    load_covariance_diagonal(
+    *this, "imu_angular_velocity_covariance_diagonal");
+  params.imu_linear_acceleration_covariance_diagonal =
+    load_covariance_diagonal(
+    *this, "imu_linear_acceleration_covariance_diagonal");
   params.command_topic = this->get_parameter("command_topic").as_string();
   return params;
 }
@@ -158,6 +206,12 @@ void VescNode::validate_parameters(const Parameters & params) const
   if (params.frame_id.empty()) {
     throw std::invalid_argument("frame_id must not be empty");
   }
+  validate_covariance_diagonal(
+    params.imu_angular_velocity_covariance_diagonal,
+    "imu_angular_velocity_covariance_diagonal");
+  validate_covariance_diagonal(
+    params.imu_linear_acceleration_covariance_diagonal,
+    "imu_linear_acceleration_covariance_diagonal");
   if (params.command_topic.empty()) {
     throw std::invalid_argument("command_topic must not be empty");
   }
@@ -387,6 +441,12 @@ VescNode::to_imu_message(const goat_vesc::VescIMUData & sample) const
   message.linear_acceleration.x = sample.acc_x;
   message.linear_acceleration.y = sample.acc_y;
   message.linear_acceleration.z = sample.acc_z;
+  message.angular_velocity_covariance =
+    covariance_matrix_from_diagonal(
+    params_.imu_angular_velocity_covariance_diagonal);
+  message.linear_acceleration_covariance =
+    covariance_matrix_from_diagonal(
+    params_.imu_linear_acceleration_covariance_diagonal);
   message.orientation_covariance[0] = -1.0;
   return message;
 }

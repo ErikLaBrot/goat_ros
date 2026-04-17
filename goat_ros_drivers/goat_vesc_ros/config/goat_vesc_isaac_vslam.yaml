@@ -21,10 +21,12 @@ goat_vesc_ros:
     publish_imu: true
     publish_motor_state: true
     frame_id: "base_link"
-    imu_frame_id: ""
-    # Zero covariance means the IMU is available but not yet characterized.
-    imu_angular_velocity_covariance_diagonal: [0.0, 0.0, 0.0]
-    imu_linear_acceleration_covariance_diagonal: [0.0, 0.0, 0.0]
+    imu_frame_id: "esc_imu_link"
+
+    # Bench-only placeholders for Visual SLAM bringup.
+    # Replace these with measured values before production use.
+    imu_angular_velocity_covariance_diagonal: [0.0025, 0.0025, 0.0025]
+    imu_linear_acceleration_covariance_diagonal: [0.04, 0.04, 0.04]
 
     # Canonical actuator command topic using goat_vesc_ros/msg/VescControlCommand.
     command_topic: "cmd/vesc"

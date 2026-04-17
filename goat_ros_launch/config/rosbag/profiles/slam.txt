@@ -9,6 +9,15 @@
 /camera/color/camera_info
 /camera/depth/image_rect_raw
 /camera/depth/camera_info
+/stereo/left/image_rect
+/stereo/left/camera_info
+/stereo/right/image_rect
+/stereo/right/camera_info
 /odom
+/visual_slam/status
+/visual_slam/tracking/odometry
+/visual_slam/tracking/vo_pose
+/visual_slam/tracking/vo_path
+/visual_slam/tracking/slam_path
 /tf
 /tf_static

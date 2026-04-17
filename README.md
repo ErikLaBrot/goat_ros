@@ -23,7 +23,8 @@ interfaces for teleop, actuator commands, telemetry, and robot bringup.
   publishing.
 - `goat_ros_launch`
   Canonical launch entrypoints for robot bringup, subsystem composition,
-  rosbag recording profiles, and bag replay.
+  rosbag recording profiles, bag replay, and Isaac ROS D435 Visual SLAM
+  bringup.
 
 ## Usage
 

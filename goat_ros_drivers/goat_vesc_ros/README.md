@@ -20,7 +20,7 @@ configuration inside one node.
 - `cmd/vesc` (`goat_vesc_ros/msg/VescControlCommand`): Canonical actuator command input. `stamp` is informational only, `drive_mode` must be `MODE_DUTY`, `drive_value` maps to `goat_vesc::VescClient::set_duty()`, and `servo_position` maps to `goat_vesc::VescClient::set_servo_pos()`.
 
 ### Published Topics
-- `imu/data_raw` (`sensor_msgs/msg/Imu`): IMU samples forwarded from `goat_vesc` callbacks. The ROS message currently carries angular velocity, linear acceleration, timestamps, and frame IDs; orientation is left unspecified.
+- `imu/data_raw` (`sensor_msgs/msg/Imu`): IMU samples forwarded from `goat_vesc` callbacks. The ROS message uses the host-clock timestamps provided by `goat_vesc`, carries angular velocity and linear acceleration, publishes an explicit IMU frame ID when configured, fills the angular-velocity and linear-acceleration covariance diagonals from ROS parameters, and leaves orientation unspecified.
 - `motor_state` (`goat_vesc_ros/msg/VescMotorState`): Motor telemetry forwarded from `goat_vesc` callbacks, including `rpm`, `current_motor`, `current_in`, `duty_cycle`, `vin`, `temp_motor`, `temp_fet`, `tachometer`, `tachometer_abs`, and `fault_code`.
 
 ## Parameters
@@ -42,11 +42,13 @@ configuration inside one node.
 - `publish_motor_state` (`bool`, default: `true`): Create and publish the motor-state topic.
 - `frame_id` (`string`, default: `"base_link"`): Default frame used for motor-state messages and as the IMU fallback frame.
 - `imu_frame_id` (`string`, default: `""`): Optional IMU-specific frame ID. When empty, `frame_id` is used.
+- `imu_angular_velocity_covariance_diagonal` (`double[3]`, default: `[0.0, 0.0, 0.0]`): Diagonal covariance for angular velocity in `(rad/s)^2`. Zero values mean the IMU is available but not yet characterized.
+- `imu_linear_acceleration_covariance_diagonal` (`double[3]`, default: `[0.0, 0.0, 0.0]`): Diagonal covariance for linear acceleration in `(m/s^2)^2`. Zero values mean the IMU is available but not yet characterized.
 - `command_topic` (`string`, default: `"cmd/vesc"`): ROS topic name for `VescControlCommand` input.
 
 ## Launch Entry Points
 
-- `goat_vesc.launch.py`: Starts `vesc_node` and loads parameters from `config/goat_vesc.yaml`. Accepts a `config_file` launch argument when you need an alternate parameter file.
+- `goat_vesc.launch.py`: Starts `vesc_node` and loads parameters from `config/goat_vesc.yaml`. Accepts a `config_file` launch argument when you need an alternate parameter file such as the Isaac ROS VSLAM preset.
 
 ## Dependencies
 
@@ -72,7 +74,16 @@ Use an alternate parameter file when needed:
 ros2 launch goat_vesc_ros goat_vesc.launch.py config_file:=/path/to/goat_vesc.yaml
 ```
 
+Start the ESC IMU with the Isaac ROS Visual SLAM-oriented frame ID and bench
+covariance placeholders:
+
+```bash
+ros2 launch goat_vesc_ros goat_vesc.launch.py \
+  config_file:=$(ros2 pkg prefix goat_vesc_ros --share)/config/goat_vesc_isaac_vslam.yaml
+```
+
 ## Rules
 
 - Topic names, parameter names, launch files, and examples in this README should match the installed package.
 - `goat_vesc_ros` owns the ROS message semantics described here; the `.msg` files intentionally remain minimal.
+- `config/goat_vesc_isaac_vslam.yaml` is a bench bringup preset only; replace its IMU covariance placeholders with measured values before production use.

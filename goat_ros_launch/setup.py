@@ -17,6 +17,8 @@ setup(
         ('share/' + package_name, ['package.xml', 'README.md']),
         (os.path.join('share', package_name, 'launch'),
             glob.glob(os.path.join('launch', '*.launch.py'))),
+        (os.path.join('share', package_name, 'config', 'isaac_ros'),
+            glob.glob(os.path.join('config', 'isaac_ros', '*.yaml'))),
         (os.path.join('share', package_name, 'config', 'rosbag', 'profiles'),
             glob.glob(os.path.join('config', 'rosbag', 'profiles', '*.txt'))),
     ],

@@ -108,6 +108,14 @@ def generate_launch_description():
         default_value="",
         description="Optional path to a sensor-stack launch file.",
     )
+    sensor_launch_arguments_argument = DeclareLaunchArgument(
+        "sensor_launch_arguments",
+        default_value="",
+        description=(
+            "Optional space-separated name:=value pairs forwarded to "
+            "sensor_launch_file."
+        ),
+    )
     teleop_config_argument = DeclareLaunchArgument(
         "teleop_config_file",
         default_value=default_teleop_config,
@@ -165,6 +173,9 @@ def generate_launch_description():
         ),
         launch_arguments={
             "sensor_launch_file": LaunchConfiguration("sensor_launch_file"),
+            "sensor_launch_arguments": LaunchConfiguration(
+                "sensor_launch_arguments"
+            ),
         }.items(),
     )
     vesc_launch = IncludeLaunchDescription(
@@ -189,6 +200,7 @@ def generate_launch_description():
     return LaunchDescription(
         [
             sensor_launch_file_argument,
+            sensor_launch_arguments_argument,
             teleop_config_argument,
             vesc_config_argument,
             joy_dev_argument,

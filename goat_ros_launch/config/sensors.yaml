@@ -1,0 +1,3 @@
+sensor_launch_file: launch/goat_d435_visual_slam.launch.py
+sensor_launch_arguments:
+  visual_slam_config_file: config/isaac_ros/goat_d435_visual_slam.yaml

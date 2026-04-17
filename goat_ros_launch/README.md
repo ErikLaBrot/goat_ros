@@ -39,7 +39,8 @@ Launch arguments provide the operator-facing configuration:
   `teleop_config_file`, `vesc_config_file`, `joy_dev`, `deadzone`, `record`,
   `record_profile`, `bag_dir`, `bag_name`, `storage_id`, and
   `storage_preset`.
-- `sensors.launch.py`: `sensor_launch_file` and `sensor_launch_arguments`.
+- `sensors.launch.py`: `config_file`, `sensor_launch_file`, and
+  `sensor_launch_arguments`.
 - `goat_d435_visual_slam.launch.py`: `serial_no`, `usb_port_id`,
   `enable_imu_fusion`, `imu_topic`, `visual_slam_config_file`,
   `camera_{x,y,z,roll,pitch,yaw}`, and `imu_{x,y,z,roll,pitch,yaw}`.
@@ -65,9 +66,9 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
 - `robot.launch.py`: Canonical robot bringup entrypoint. It includes sensor
   integration, joystick teleop, VESC interface bringup, and optional rosbag
   recording.
-- `sensors.launch.py`: Thin sensor-stack integration wrapper. It includes the
-  launch file passed through `sensor_launch_file` when a sensor stack exists
-  outside this package and can forward launch arguments to it.
+- `sensors.launch.py`: Default sensor-stack integration wrapper. It reads
+  `config/sensors.yaml` by default, which points at the D435 Visual SLAM stack,
+  and still allows explicit launch file or argument overrides from the CLI.
 - `goat_d435_visual_slam.launch.py`: Bench bringup for the D435 stereo-only or
   visual-inertial Isaac ROS Visual SLAM stack. It owns the GOAT-facing stereo
   topic remaps, publishes static transforms for `camera_link` and
@@ -93,7 +94,8 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
   environment.
 - Config files: `config/rosbag/profiles/*.txt` provide explicit topic
   allowlists for rosbag recording, and `config/isaac_ros/goat_d435_visual_slam.yaml`
-  provides the default Visual SLAM parameters.
+  provides the default Visual SLAM parameters. `config/sensors.yaml` provides
+  the default sensor bringup wrapper config used by `sensors.launch.py`.
 
 ## Example Usage
 
@@ -138,6 +140,12 @@ Start the bench D435 stereo-only Visual SLAM stack:
 
 ```bash
 ros2 launch goat_ros_launch goat_d435_visual_slam.launch.py
+```
+
+Start the default sensor wrapper with its package-installed config:
+
+```bash
+ros2 launch goat_ros_launch sensors.launch.py
 ```
 
 Turn on external ESC IMU fusion for the same sensor stack:

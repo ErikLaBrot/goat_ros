@@ -1,4 +1,4 @@
-"""Launch the canonical GOAT robot bringup entrypoint."""
+"""Launch the canonical GOAT robot-side bringup entrypoint."""
 
 from datetime import datetime
 import os
@@ -86,16 +86,9 @@ def _record_process(context):
 
 
 def generate_launch_description():
-    """Build the launch description for full robot bringup."""
+    """Build the launch description for robot-side bringup."""
     launch_share_dir = get_package_share_directory("goat_ros_launch")
-    teleop_share_dir = get_package_share_directory("goat_teleop")
     vesc_share_dir = get_package_share_directory("goat_vesc_ros")
-
-    default_teleop_config = os.path.join(
-        teleop_share_dir,
-        "config",
-        "goat_joy.yaml",
-    )
     default_vesc_config = os.path.join(
         vesc_share_dir,
         "config",
@@ -116,25 +109,10 @@ def generate_launch_description():
             "sensor_launch_file."
         ),
     )
-    teleop_config_argument = DeclareLaunchArgument(
-        "teleop_config_file",
-        default_value=default_teleop_config,
-        description="Path to the goat_joy parameter file.",
-    )
     vesc_config_argument = DeclareLaunchArgument(
         "vesc_config_file",
         default_value=default_vesc_config,
         description="Path to the goat_vesc_ros parameter file.",
-    )
-    joy_dev_argument = DeclareLaunchArgument(
-        "joy_dev",
-        default_value="/dev/input/js0",
-        description="Joystick device passed to joy_node.",
-    )
-    deadzone_argument = DeclareLaunchArgument(
-        "deadzone",
-        default_value="0.05",
-        description="Joystick deadzone passed to joy_node.",
     )
     record_argument = DeclareLaunchArgument(
         "record",
@@ -186,25 +164,12 @@ def generate_launch_description():
             "config_file": LaunchConfiguration("vesc_config_file"),
         }.items(),
     )
-    teleop_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(launch_share_dir, "launch", "teleop.launch.py")
-        ),
-        launch_arguments={
-            "config_file": LaunchConfiguration("teleop_config_file"),
-            "joy_dev": LaunchConfiguration("joy_dev"),
-            "deadzone": LaunchConfiguration("deadzone"),
-        }.items(),
-    )
 
     return LaunchDescription(
         [
             sensor_launch_file_argument,
             sensor_launch_arguments_argument,
-            teleop_config_argument,
             vesc_config_argument,
-            joy_dev_argument,
-            deadzone_argument,
             record_argument,
             record_profile_argument,
             bag_dir_argument,
@@ -213,7 +178,6 @@ def generate_launch_description():
             storage_preset_argument,
             sensors_launch,
             vesc_launch,
-            teleop_launch,
             OpaqueFunction(function=_record_process),
         ]
     )

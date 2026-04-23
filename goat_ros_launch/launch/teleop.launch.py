@@ -1,4 +1,4 @@
-"""Launch the GOAT joystick teleop integration."""
+"""Launch the GOAT local bench teleop integration."""
 
 import os
 
@@ -10,7 +10,7 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    """Build the launch description for joystick teleop bringup."""
+    """Build the launch description for explicit bench teleop."""
     teleop_share_dir = get_package_share_directory("goat_teleop")
     default_config_file = os.path.join(
         teleop_share_dir,
@@ -36,7 +36,7 @@ def generate_launch_description():
 
     teleop_launch = IncludeLaunchDescription(
         PythonLaunchDescriptionSource(
-            os.path.join(teleop_share_dir, "launch", "goat_joy.launch.py")
+            os.path.join(teleop_share_dir, "launch", "bench_teleop.launch.py")
         ),
         launch_arguments={
             "config_file": LaunchConfiguration("config_file"),

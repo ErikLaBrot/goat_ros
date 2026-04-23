@@ -36,23 +36,24 @@ Rosbag recording profiles install under `config/rosbag/profiles`:
 Launch arguments provide the operator-facing configuration:
 
 - `robot.launch.py`: `sensor_launch_file`, `sensor_launch_arguments`,
-  `teleop_config_file`, `vesc_config_file`, `joy_dev`, `deadzone`, `record`,
-  `record_profile`, `bag_dir`, `bag_name`, `storage_id`, and
-  `storage_preset`.
+  `vesc_config_file`, `record`, `record_profile`, `bag_dir`, `bag_name`,
+  `storage_id`, and `storage_preset`.
+- `bench_robot_teleop.launch.py`: `sensor_launch_file`,
+  `sensor_launch_arguments`, `teleop_config_file`, `vesc_config_file`,
+  `joy_dev`, `deadzone`, `record`, `record_profile`, `bag_dir`, `bag_name`,
+  `storage_id`, and `storage_preset`.
 - `sensors.launch.py`: `config_file`, `sensor_launch_file`, and
   `sensor_launch_arguments`.
 - `goat_d435_visual_slam.launch.py`: `serial_no`, `usb_port_id`,
   `enable_imu_fusion`, `imu_topic`, `visual_slam_config_file`,
   `camera_{x,y,z,roll,pitch,yaw}`, and `imu_{x,y,z,roll,pitch,yaw}`.
 - `robot_d435_visual_slam.launch.py`: `sensor_launch_arguments`,
-  `teleop_config_file`, `vesc_config_file`, `joy_dev`, `deadzone`, `record`,
-  `record_profile`, `bag_dir`, `bag_name`, `storage_id`, and
-  `storage_preset`.
+  `vesc_config_file`, `record`, `record_profile`, `bag_dir`, `bag_name`,
+  `storage_id`, and `storage_preset`.
 - `robot_d435_visual_slam_vio.launch.py`: Same as
-  `robot_d435_visual_slam.launch.py`, but defaults
-  `sensor_launch_arguments` to `enable_imu_fusion:=true` and
-  `vesc_config_file` to the Isaac ROS VSLAM-oriented `goat_vesc_ros`
-  parameter file.
+  `robot_d435_visual_slam.launch.py`, but defaults `sensor_launch_arguments`
+  to `enable_imu_fusion:=true` and `vesc_config_file` to the Isaac ROS
+  VSLAM-oriented `goat_vesc_ros` parameter file.
 - `teleop.launch.py`: `config_file`, `joy_dev`, and `deadzone`.
 - `replay.launch.py`: `bag_path`, `rate`, and `publish_clock`.
 
@@ -63,9 +64,10 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
 
 ## Launch Entry Points
 
-- `robot.launch.py`: Canonical robot bringup entrypoint. It includes sensor
-  integration, joystick teleop, VESC interface bringup, and optional rosbag
-  recording.
+- `robot.launch.py`: Canonical robot-side bringup entrypoint. It includes
+  sensor integration, VESC interface bringup, and optional rosbag recording.
+- `bench_robot_teleop.launch.py`: Explicit local bench-debug wrapper that
+  composes `robot.launch.py` with local joystick teleop on the same machine.
 - `sensors.launch.py`: Default sensor-stack integration wrapper. It reads
   `config/sensors.yaml` by default, which points at the D435 Visual SLAM stack,
   and still allows explicit launch file or argument overrides from the CLI. In
@@ -81,8 +83,8 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
 - `robot_d435_visual_slam_vio.launch.py`: Full GOAT bringup wrapper that uses
   the D435 Visual SLAM sensor stack with `enable_imu_fusion:=true` and the
   VSLAM-oriented `goat_vesc_ros` config.
-- `teleop.launch.py`: Thin joystick/control-side wrapper around
-  `goat_teleop`'s `goat_joy.launch.py`.
+- `teleop.launch.py`: Thin local bench-teleop wrapper around
+  `goat_teleop`'s `bench_teleop.launch.py`.
 - `replay.launch.py`: Thin wrapper around `ros2 bag play`.
 
 ## Dependencies
@@ -91,11 +93,12 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
   `isaac_ros_visual_slam`, `launch`, `launch_ros`, `realsense2_camera`,
   `ros2bag`, `rosbag2_storage_mcap`, and `tf2_ros`
 - Runtime assumptions: `goat_vesc_ros` is configured for the target VESC
-  device, joystick hardware is available to `joy_node`, and any sensor stack is
-  exposed through its own launch file. The D435/Visual SLAM entrypoints also
-  require the Isaac ROS runtime packages to be installed in the active ROS
-  environment. In `goat_racer`, those heavy Isaac packages are expected to come
-  from the GOAT Isaac image layer rather than a source checkout.
+  device, any sensor stack is exposed through its own launch file, and joystick
+  hardware is available to `joy_node` when bench teleop is launched. The D435/
+  Visual SLAM entrypoints also require the Isaac ROS runtime packages to be
+  installed in the active ROS environment. In `goat_racer`, those heavy Isaac
+  packages are expected to come from the GOAT Isaac image layer rather than a
+  source checkout.
 - Config files: `config/rosbag/profiles/*.txt` provide explicit topic
   allowlists for rosbag recording, and `config/isaac_ros/goat_d435_visual_slam.yaml`
   provides the default Visual SLAM parameters. `config/sensors.yaml` provides
@@ -107,7 +110,13 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
 ros2 launch goat_ros_launch robot.launch.py
 ```
 
-Start canonical bringup with the core rosbag profile:
+Start explicit local bench teleop plus robot bringup on one machine:
+
+```bash
+ros2 launch goat_ros_launch bench_robot_teleop.launch.py
+```
+
+Start canonical robot-side bringup with the core rosbag profile:
 
 ```bash
 ros2 launch goat_ros_launch robot.launch.py record:=true
@@ -190,6 +199,8 @@ ros2 launch goat_ros_launch robot.launch.py \
 - Keep this package launch/config only.
 - Prefer including subsystem launch files over duplicating node logic.
 - Do not add robot, teleop, VESC, perception, or recorder nodes here.
+- Keep robot-side bringup and client-side teleop as separate workflows unless a
+  launch file explicitly documents that it composes both for bench use.
 - Rosbag recording uses explicit profile topic allowlists rather than `-a`.
 - The D435 Visual SLAM launch defaults `base_link -> camera_link` and
   `base_link -> esc_imu_link` to zero transforms for bench bringup only; set

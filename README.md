@@ -33,5 +33,6 @@ Build these packages as part of a ROS 2 workspace that also makes the
 
 In `goat_racer`, the supported path is `./scripts/dev/build_ws.sh`, which
 builds GOAT-owned packages from `ros_ws/src/goat_ros` together with
-`external/goat_vesc` while relying on the GOAT Isaac image for heavy Isaac ROS
-runtime packages such as Visual SLAM.
+`external/goat_vesc`. `./scripts/dev/rosdep_install.sh` installs missing
+system dependencies and prebuilt Isaac ROS runtime packages such as
+`isaac_ros_visual_slam` inside the development container.

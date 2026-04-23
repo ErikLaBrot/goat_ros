@@ -1,8 +1,8 @@
-"""Backward-compatible wrapper for the legacy GOAT teleop launch.
+"""Launch local GOAT bench teleop.
 
 Purpose:
-    Preserve the historical `goat_joy.launch.py` entrypoint by delegating to
-    `bench_teleop.launch.py`.
+    Start `joy_node` and the `goat_joy` teleop mapper together for local
+    bench testing on the canonical `cmd/vesc` command topic.
 
 Inputs:
     `config_file`, `joy_dev`, and `deadzone` launch arguments plus the
@@ -11,25 +11,20 @@ Inputs:
 Outputs:
     Starts the local joystick and teleop-mapper nodes with the configured
     controller mapping parameters.
-
-Usage:
-    ros2 launch goat_teleop goat_joy.launch.py
-
-Notes:
-    Prefer `bench_teleop.launch.py` for new local bench workflows.
 """
 
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
-from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
-from launch.launch_description_sources import PythonLaunchDescriptionSource
+from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    """Build the launch description for the legacy teleop wrapper."""
+    """Build the launch description for local bench teleop."""
     default_config_file = os.path.join(
         get_package_share_directory("goat_teleop"),
         "config",
@@ -52,19 +47,28 @@ def generate_launch_description():
         description="Joystick deadzone passed to joy_node.",
     )
 
-    bench_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("goat_teleop"),
-                "launch",
-                "bench_teleop.launch.py",
-            )
-        ),
-        launch_arguments={
-            "config_file": LaunchConfiguration("config_file"),
-            "joy_dev": LaunchConfiguration("joy_dev"),
-            "deadzone": LaunchConfiguration("deadzone"),
-        }.items(),
+    joy_node = Node(
+        package="joy",
+        executable="joy_node",
+        name="joy_node",
+        output="screen",
+        parameters=[
+            {
+                "dev": LaunchConfiguration("joy_dev"),
+                "deadzone": ParameterValue(
+                    LaunchConfiguration("deadzone"),
+                    value_type=float,
+                ),
+            }
+        ],
+    )
+
+    goat_joy_node = Node(
+        package="goat_teleop",
+        executable="goat_joy",
+        name="goat_joy",
+        output="screen",
+        parameters=[LaunchConfiguration("config_file")],
     )
 
     return LaunchDescription(
@@ -72,6 +76,7 @@ def generate_launch_description():
             config_file_argument,
             joy_dev_argument,
             deadzone_argument,
-            bench_launch,
+            joy_node,
+            goat_joy_node,
         ]
     )

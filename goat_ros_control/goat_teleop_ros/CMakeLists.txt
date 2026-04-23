@@ -12,13 +12,25 @@ find_package(goat_vesc_ros REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(sensor_msgs REQUIRED)
 
-add_executable(goat_joy
+add_library(goat_joy_node
   src/goat_joy.cpp
 )
-target_include_directories(goat_joy
+target_include_directories(goat_joy_node
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>
+)
+ament_target_dependencies(goat_joy_node
+  goat_vesc_ros
+  rclcpp
+  sensor_msgs
+)
+
+add_executable(goat_joy
+  src/main.cpp
+)
+target_link_libraries(goat_joy
+  goat_joy_node
 )
 ament_target_dependencies(goat_joy
   goat_vesc_ros
@@ -27,7 +39,10 @@ ament_target_dependencies(goat_joy
 )
 
 install(TARGETS
+  goat_joy_node
   goat_joy
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
   RUNTIME DESTINATION lib/${PROJECT_NAME}
 )
 
@@ -52,6 +67,22 @@ if(BUILD_TESTING)
   target_include_directories(test_input_conditioning
     PRIVATE
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
+
+  ament_add_gtest(test_goat_joy
+    test/test_goat_joy.cpp
+  )
+  target_include_directories(test_goat_joy
+    PRIVATE
+      $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  )
+  target_link_libraries(test_goat_joy
+    goat_joy_node
+  )
+  ament_target_dependencies(test_goat_joy
+    goat_vesc_ros
+    rclcpp
+    sensor_msgs
   )
 endif()
 

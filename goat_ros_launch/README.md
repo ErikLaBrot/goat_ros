@@ -68,11 +68,14 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
   recording.
 - `sensors.launch.py`: Default sensor-stack integration wrapper. It reads
   `config/sensors.yaml` by default, which points at the D435 Visual SLAM stack,
-  and still allows explicit launch file or argument overrides from the CLI.
+  and still allows explicit launch file or argument overrides from the CLI. In
+  the default GOAT deployment path this is the launch started by
+  `./scripts/ops/run_vslam.sh`.
 - `goat_d435_visual_slam.launch.py`: Bench bringup for the D435 stereo-only or
   visual-inertial Isaac ROS Visual SLAM stack. It owns the GOAT-facing stereo
   topic remaps, publishes static transforms for `camera_link` and
-  `esc_imu_link`, and launches `isaac_ros_visual_slam`.
+  `esc_imu_link`, and launches `isaac_ros_visual_slam`. The default profile is
+  stereo-only: infrared stereo on, color off, depth off, and IMU fusion off.
 - `robot_d435_visual_slam.launch.py`: Full GOAT bringup wrapper that uses the
   D435 Visual SLAM sensor stack with the normal `goat_vesc_ros` config.
 - `robot_d435_visual_slam_vio.launch.py`: Full GOAT bringup wrapper that uses
@@ -91,7 +94,8 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
   device, joystick hardware is available to `joy_node`, and any sensor stack is
   exposed through its own launch file. The D435/Visual SLAM entrypoints also
   require the Isaac ROS runtime packages to be installed in the active ROS
-  environment.
+  environment. In `goat_racer`, those heavy Isaac packages are expected to come
+  from the GOAT Isaac image layer rather than a source checkout.
 - Config files: `config/rosbag/profiles/*.txt` provide explicit topic
   allowlists for rosbag recording, and `config/isaac_ros/goat_d435_visual_slam.yaml`
   provides the default Visual SLAM parameters. `config/sensors.yaml` provides
@@ -147,6 +151,9 @@ Start the default sensor wrapper with its package-installed config:
 ```bash
 ros2 launch goat_ros_launch sensors.launch.py
 ```
+
+That default sensor wrapper path is the normal GOAT D435 demo. It resolves to
+the stereo-only configuration unless you override launch arguments.
 
 Turn on external ESC IMU fusion for the same sensor stack:
 

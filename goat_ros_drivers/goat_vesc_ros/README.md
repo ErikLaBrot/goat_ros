@@ -34,8 +34,8 @@ configuration inside one node.
 - `motor_poll_interval_ms` (`int`, default: `50`): Motor-state poll cadence forwarded to `goat_vesc`. `0` disables motor polling.
 - `poll_response_timeout_ms` (`int`, default: `20`): Reply timeout forwarded to `goat_vesc`.
 - `query_guard_window_ms` (`int`, default: `5`): Query guard window forwarded to `goat_vesc`.
-- `command_watchdog_timeout_ms` (`int`, default: `0`): Drive-side watchdog timeout forwarded to `goat_vesc`. `0` disables it.
-- `command_watchdog_action` (`string`, default: `"disabled"`): Drive-side watchdog action forwarded to `goat_vesc`: `disabled`, `coast`, or `brake_current`.
+- `command_watchdog_timeout_ms` (`int`, default: `250`): Drive-side watchdog timeout forwarded to `goat_vesc`. A non-zero default makes teleop/control command dropout coast the robot to a stop unless you explicitly override it.
+- `command_watchdog_action` (`string`, default: `"coast"`): Drive-side watchdog action forwarded to `goat_vesc`: `disabled`, `coast`, or `brake_current`.
 - `max_brake_current` (`double`, default: `0.0`): Maximum brake current allowed by the forwarded watchdog configuration.
 - `command_watchdog_brake_current` (`double`, default: `0.0`): Requested watchdog brake current before clamping in `goat_vesc`.
 - `publish_imu` (`bool`, default: `true`): Create and publish the IMU topic.

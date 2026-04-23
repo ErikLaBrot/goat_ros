@@ -1,22 +1,16 @@
-"""Backward-compatible wrapper for the legacy GOAT teleop launch.
+"""Launch the GOAT remote teleop client.
 
 Purpose:
-    Preserve the historical `goat_joy.launch.py` entrypoint by delegating to
-    `bench_teleop.launch.py`.
+    Start `joy_node` and the `goat_joy` mapper on an operator machine while
+    the robot subscribes to the shared canonical `cmd/vesc` topic.
 
 Inputs:
     `config_file`, `joy_dev`, and `deadzone` launch arguments plus the
     installed `goat_teleop` package share directory.
 
 Outputs:
-    Starts the local joystick and teleop-mapper nodes with the configured
+    Starts the remote joystick and teleop-mapper nodes with the configured
     controller mapping parameters.
-
-Usage:
-    ros2 launch goat_teleop goat_joy.launch.py
-
-Notes:
-    Prefer `bench_teleop.launch.py` for new local bench workflows.
 """
 
 import os
@@ -29,9 +23,10 @@ from launch.substitutions import LaunchConfiguration
 
 
 def generate_launch_description():
-    """Build the launch description for the legacy teleop wrapper."""
+    """Build the launch description for the remote teleop client."""
+    teleop_share_dir = get_package_share_directory("goat_teleop")
     default_config_file = os.path.join(
-        get_package_share_directory("goat_teleop"),
+        teleop_share_dir,
         "config",
         "goat_joy.yaml",
     )
@@ -52,26 +47,24 @@ def generate_launch_description():
         description="Joystick deadzone passed to joy_node.",
     )
 
-    bench_launch = IncludeLaunchDescription(
-        PythonLaunchDescriptionSource(
-            os.path.join(
-                get_package_share_directory("goat_teleop"),
-                "launch",
-                "bench_teleop.launch.py",
-            )
-        ),
-        launch_arguments={
-            "config_file": LaunchConfiguration("config_file"),
-            "joy_dev": LaunchConfiguration("joy_dev"),
-            "deadzone": LaunchConfiguration("deadzone"),
-        }.items(),
-    )
-
     return LaunchDescription(
         [
             config_file_argument,
             joy_dev_argument,
             deadzone_argument,
-            bench_launch,
+            IncludeLaunchDescription(
+                PythonLaunchDescriptionSource(
+                    os.path.join(
+                        teleop_share_dir,
+                        "launch",
+                        "bench_teleop.launch.py",
+                    )
+                ),
+                launch_arguments={
+                    "config_file": LaunchConfiguration("config_file"),
+                    "joy_dev": LaunchConfiguration("joy_dev"),
+                    "deadzone": LaunchConfiguration("deadzone"),
+                }.items(),
+            )
         ]
     )

@@ -192,10 +192,3 @@ void GoatJoy::publishCommand(double command, double servo_position) {
 }
 
 } // namespace goat_teleop
-
-int main(int argc, char **argv) {
-  rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<goat_teleop::GoatJoy>());
-  rclcpp::shutdown();
-  return 0;
-}

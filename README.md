@@ -30,3 +30,9 @@ interfaces for teleop, actuator commands, telemetry, and robot bringup.
 
 Build these packages as part of a ROS 2 workspace that also makes the
 `goat_vesc` dependency available to `goat_vesc_ros`.
+
+In `goat_racer`, the supported path is `./scripts/dev/build_ws.sh`, which
+builds GOAT-owned packages from `ros_ws/src/goat_ros` together with
+`external/goat_vesc`. `./scripts/dev/rosdep_install.sh` installs missing
+system dependencies and prebuilt Isaac ROS runtime packages such as
+`isaac_ros_visual_slam` inside the development container.

@@ -52,6 +52,12 @@ steps should soften without making the vehicle feel delayed.
 - `remote_client.launch.py`: Starts the same client-side teleop stack for an operator machine that shares the robot's ROS graph. Accepts `config_file`, `joy_dev`, and `deadzone`.
 - `goat_joy.launch.py`: Backward-compatible wrapper around `bench_teleop.launch.py`.
 
+## Config Profiles
+
+- `goat_joy.yaml`: Conservative default teleop mapping.
+- `remote_field_joy.yaml`: Moderate field-control mapping for the workstation.
+  It increases command and steering sensitivity before publishing `cmd/vesc`.
+
 ## Dependencies
 
 - ROS packages: `goat_vesc_ros`, `joy`, `rclcpp`, `sensor_msgs`, `launch`, `launch_ros`
@@ -73,6 +79,13 @@ Start the same teleop stack on a remote operator client:
 
 ```bash
 ros2 launch goat_teleop remote_client.launch.py
+```
+
+Start the remote field-control profile:
+
+```bash
+ros2 launch goat_teleop remote_client.launch.py \
+  config_file:=$(ros2 pkg prefix goat_teleop --share)/config/remote_field_joy.yaml
 ```
 
 Override the joystick device or deadzone at launch time when needed:

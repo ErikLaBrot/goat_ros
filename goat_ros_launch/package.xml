@@ -3,7 +3,7 @@
 <package format="3">
   <name>goat_ros_launch</name>
   <version>0.1.0</version>
-  <description>High-level launch and rosbag profiles for GOAT bringup.</description>
+  <description>Deployable ROS launch apps for GOAT bringup.</description>
   <maintainer email="goat@example.com">GOAT Maintainers</maintainer>
   <license>TODO</license>
 
@@ -14,10 +14,7 @@
   <exec_depend>launch</exec_depend>
   <exec_depend>launch_ros</exec_depend>
   <exec_depend>realsense2_camera</exec_depend>
-  <exec_depend>ros2bag</exec_depend>
-  <exec_depend>rosbag2_storage_mcap</exec_depend>
   <exec_depend>tf2_ros</exec_depend>
-  <exec_depend>python3-yaml</exec_depend>
 
   <test_depend>ament_copyright</test_depend>
   <test_depend>ament_flake8</test_depend>

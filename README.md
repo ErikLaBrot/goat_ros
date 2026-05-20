@@ -11,7 +11,8 @@ interfaces for teleop, actuator commands, telemetry, and robot bringup.
 - `goat_ros_drivers/`
   Driver-facing ROS packages, including the VESC adapter node.
 - `goat_ros_launch/`
-  High-level robot bringup launch files and rosbag recording profiles.
+  Deployable robot app launch files for sensors, teleop, VSLAM, and
+  teleop+VSLAM.
 
 ## Packages
 
@@ -22,9 +23,8 @@ interfaces for teleop, actuator commands, telemetry, and robot bringup.
   ROS adapter around `goat_vesc` for actuator commands and telemetry
   publishing.
 - `goat_ros_launch`
-  Canonical launch entrypoints for robot bringup, subsystem composition,
-  rosbag recording profiles, bag replay, and Isaac ROS D435 Visual SLAM
-  bringup.
+  Canonical app entrypoints for robot bringup, subsystem composition, and
+  Isaac ROS D435 Visual SLAM bringup.
 
 ## Usage
 

@@ -83,6 +83,9 @@ may pass a workspace-specific `bag_dir` when they run inside Docker.
 - `robot_d435_visual_slam_vio.launch.py`: Full GOAT bringup wrapper that uses
   the D435 Visual SLAM sensor stack with `enable_imu_fusion:=true` and the
   VSLAM-oriented `goat_vesc_ros` config.
+- `field_robot.launch.py`: Robot-side field app entrypoint for boot deployment.
+  It starts VESC control plus D435 stereo Visual SLAM and intentionally excludes
+  local joystick teleop nodes.
 - `teleop.launch.py`: Thin local bench-teleop wrapper around
   `goat_teleop`'s `bench_teleop.launch.py`.
 - `replay.launch.py`: Thin wrapper around `ros2 bag play`.
@@ -182,6 +185,12 @@ Start full robot bringup with the ESC IMU fused into Visual SLAM:
 
 ```bash
 ros2 launch goat_ros_launch robot_d435_visual_slam_vio.launch.py
+```
+
+Start the robot-side field app used by boot deployment:
+
+```bash
+ros2 launch goat_ros_launch field_robot.launch.py
 ```
 
 Forward custom sensor launch arguments through the canonical robot wrapper when

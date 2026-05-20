@@ -3,11 +3,11 @@ goat_joy:
     throttle_axis: 1
     steering_axis: 3
     enable_button: 4
-    command_scale: 0.10
+    command_scale: 0.5
     invert_throttle: false
     invert_steering: false
     servo_center: 0.5
-    servo_amplitude: 0.1
+    servo_amplitude: 0.5
     deadband: 0.05
     steer_tau_s: 0.12
     throttle_tau_s: 0.18

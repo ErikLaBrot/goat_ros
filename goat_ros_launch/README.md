@@ -11,12 +11,13 @@ deployable app target selected by `config/deploy/robot_app.yaml` in
 
 - `sensors.launch.py`: Starts `goat_vesc_ros` plus the D435 RealSense camera in
   a multithreaded component container.
-- `teleop.launch.py`: Starts remote joystick teleop with `joy_node` and
-  `goat_teleop`, publishing `cmd/vesc`.
+- `teleop.launch.py`: Starts the workstation-side joystick client with
+  `joy_node` and `goat_teleop`, publishing `cmd/vesc` over ROS.
 - `vslam.launch.py`: Starts sensors plus composable Isaac ROS Visual SLAM in
   the same NVIDIA component container.
-- `teleop_vslam.launch.py`: Starts remote teleop plus the full VSLAM app for
-  bench and development workflows.
+- `teleop_vslam.launch.py`: Starts the robot-side remote teleop target plus
+  VSLAM. The robot runs VESC command reception, RealSense, and Visual SLAM;
+  the joystick client runs separately on the workstation.
 
 ## Runtime Shape
 
@@ -50,7 +51,7 @@ Sensor and VSLAM apps accept:
 - `imu_topic`: Topic carrying the ESC IMU as `sensor_msgs/msg/Imu`.
 - `visual_slam_config_file`: Path to the Isaac ROS Visual SLAM parameter file.
 
-Teleop apps accept:
+The workstation teleop client accepts:
 
 - `teleop_config_file`: Path to the `goat_teleop` parameter file.
 - `joy_dev`: Joystick device passed to `joy_node`.
@@ -63,6 +64,13 @@ ros2 launch goat_ros_launch sensors.launch.py
 ros2 launch goat_ros_launch teleop.launch.py
 ros2 launch goat_ros_launch vslam.launch.py
 ros2 launch goat_ros_launch teleop_vslam.launch.py
+```
+
+For remote manual control, run `teleop_vslam.launch.py` on the robot and run
+the teleop client on the workstation:
+
+```bash
+ros2 launch goat_ros_launch teleop.launch.py
 ```
 
 Enable external ESC IMU fusion in the VSLAM app:

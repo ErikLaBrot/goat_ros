@@ -1,7 +1,0 @@
-# Minimum operator and vehicle state needed to reconstruct a run.
-/cmd/vesc
-/joy
-/imu/data_raw
-/motor_state
-/tf
-/tf_static

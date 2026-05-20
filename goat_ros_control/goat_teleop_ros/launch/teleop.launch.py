@@ -1,17 +1,4 @@
-"""Launch local GOAT bench teleop.
-
-Purpose:
-    Start `joy_node` and the `goat_joy` teleop mapper together for local
-    bench testing on the canonical `cmd/vesc` command topic.
-
-Inputs:
-    `config_file`, `joy_dev`, and `deadzone` launch arguments plus the
-    installed `goat_teleop` package share directory.
-
-Outputs:
-    Starts the local joystick and teleop-mapper nodes with the configured
-    controller mapping parameters.
-"""
+"""Launch GOAT joystick teleop for a remote operator station."""
 
 import os
 
@@ -24,16 +11,16 @@ from launch_ros.parameter_descriptions import ParameterValue
 
 
 def generate_launch_description():
-    """Build the launch description for local bench teleop."""
-    default_config_file = os.path.join(
+    """Build the launch description for joystick teleop."""
+    default_config = os.path.join(
         get_package_share_directory("goat_teleop"),
         "config",
         "goat_joy.yaml",
     )
 
-    config_file_argument = DeclareLaunchArgument(
+    config_argument = DeclareLaunchArgument(
         "config_file",
-        default_value=default_config_file,
+        default_value=default_config,
         description="Path to the goat_joy parameter file.",
     )
     joy_dev_argument = DeclareLaunchArgument(
@@ -62,8 +49,7 @@ def generate_launch_description():
             }
         ],
     )
-
-    goat_joy_node = Node(
+    teleop_node = Node(
         package="goat_teleop",
         executable="goat_joy",
         name="goat_joy",
@@ -73,10 +59,10 @@ def generate_launch_description():
 
     return LaunchDescription(
         [
-            config_file_argument,
+            config_argument,
             joy_dev_argument,
             deadzone_argument,
             joy_node,
-            goat_joy_node,
+            teleop_node,
         ]
     )

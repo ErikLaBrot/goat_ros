@@ -1,0 +1,20 @@
+goat_ros_laser:
+  ros__parameters:
+    device_path: "/dev/ttyUSB0"
+    baud: 230400
+    auto_connect: true
+    auto_reconnect: true
+    reconnect_period_ms: 1000
+    data_timeout_ms: 500
+    check_device_path: true
+
+    filter_ranges: true
+    range_min: 0.03
+    range_max: 12.0
+
+    scan_topic: "scan"
+    frame_id: "laser"
+    publish_rate_hz: 20.0
+    angle_min: -3.141592653589793
+    angle_max: 3.141592653589793
+    angle_increment: 0.017453292519943295

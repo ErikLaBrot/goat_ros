@@ -33,6 +33,15 @@ def common_sensor_arguments():
             ),
             description="Path to the goat_vesc_ros parameter file.",
         ),
+        DeclareLaunchArgument(
+            "laser_config_file",
+            default_value=os.path.join(
+                get_package_share_directory("goat_ros_laser"),
+                "config",
+                "goat_laser.yaml",
+            ),
+            description="Path to the goat_ros_laser parameter file.",
+        ),
         *static_transform_arguments("camera", "camera_link"),
         *static_transform_arguments("imu", "esc_imu_link"),
     ]
@@ -163,6 +172,17 @@ def vesc_node():
     )
 
 
+def laser_node():
+    """Build the GOAT STL-19P lidar node."""
+    return Node(
+        package="goat_ros_laser",
+        executable="goat_laser_node",
+        name="goat_ros_laser",
+        output="screen",
+        parameters=[LaunchConfiguration("laser_config_file")],
+    )
+
+
 def teleop_nodes():
     """Build remote joystick and GOAT command mapper nodes."""
     return [
@@ -269,6 +289,7 @@ def sensor_nodes(include_visual_slam=False):
 
     return [
         vesc_node(),
+        laser_node(),
         static_transform_node(
             "camera_link_static_tf", "camera", "camera_link"
         ),

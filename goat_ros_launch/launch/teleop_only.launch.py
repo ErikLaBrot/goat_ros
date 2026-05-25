@@ -1,4 +1,4 @@
-"""Launch the high-level teleop plus Visual SLAM ROS graph."""
+"""Launch the high-level teleop-only ROS graph."""
 
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument, IncludeLaunchDescription
@@ -19,12 +19,12 @@ def generate_launch_description():
         [
             DeclareLaunchArgument(
                 "config_dir",
-                default_value="/etc/goat/config-bundles/teleop-vslam",
+                default_value="/etc/goat/config-bundles/teleop",
                 description="External config bundle directory.",
             ),
             DeclareLaunchArgument(
                 "generated_dir",
-                default_value="/run/goat/generated/teleop-vslam",
+                default_value="/run/goat/generated/teleop",
                 description="Generated config directory.",
             ),
             DeclareLaunchArgument(
@@ -48,21 +48,6 @@ def generate_launch_description():
                     )
                 }.items(),
             ),
-            IncludeLaunchDescription(
-                launch_file("realsense.launch.py"),
-                launch_arguments={
-                    "params_file": PathJoinSubstitution(
-                        [config_dir, "params", "realsense.yaml"]
-                    )
-                }.items(),
-            ),
-            IncludeLaunchDescription(
-                launch_file("visual_slam.launch.py"),
-                launch_arguments={
-                    "params_file": PathJoinSubstitution(
-                        [config_dir, "params", "vslam.yaml"]
-                    )
-                }.items(),
-            ),
         ]
     )
+

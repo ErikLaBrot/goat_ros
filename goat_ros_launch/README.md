@@ -13,8 +13,11 @@ deployable app target selected by `config/deploy/robot_app.yaml` in
   a multithreaded component container.
 - `teleop.launch.py`: Starts the workstation-side joystick client with
   `joy_node` and `goat_teleop`, publishing `cmd/vesc` over ROS.
+- `teleop_only.launch.py`: Starts VESC command reception, joystick teleop, and
+  the LD19 lidar for manual lidar/teleop runs.
 - `vslam.launch.py`: Starts sensors plus composable Isaac ROS Visual SLAM in
   the same NVIDIA component container.
+- `laser_driver.launch.py`: Starts the GOAT LD19 lidar driver.
 - `teleop_vslam.launch.py`: Starts the robot-side remote teleop target plus
   VSLAM. The robot runs VESC command reception, RealSense, and Visual SLAM;
   the joystick client runs separately on the workstation.
@@ -57,6 +60,14 @@ The workstation teleop client accepts:
 - `joy_dev`: Joystick device passed to `joy_node`.
 - `deadzone`: Joystick deadzone passed to `joy_node`.
 
+Recordable app launch files accept:
+
+- `record_bag`: Set to `true` to start `ros2 bag record` with the app.
+- `bag_profile`: Installed profile in `config/bag_profiles`.
+- `bag_note`: Optional note appended to the bag directory name.
+- `bag_root`: Persistent bag root, defaulting to `/workspaces/goat_data/bags/raw`.
+- `robot_name`: Robot name included in bag directory names.
+
 ## Example Usage
 
 ```bash
@@ -87,11 +98,28 @@ ros2 launch goat_ros_launch vslam.launch.py \
   camera_x:=0.10 camera_z:=0.22 camera_yaw:=1.57
 ```
 
+Record a teleop/lidar run:
+
+```bash
+ros2 launch goat_ros_launch teleop_only.launch.py \
+  record_bag:=true \
+  bag_profile:=lidar_teleop \
+  bag_note:=garage_test \
+  robot_name:=goat-racer-orange
+```
+
+Replay a recorded bag with `/clock`:
+
+```bash
+ros2 launch goat_ros_launch replay_bag.launch.py \
+  bag_path:=/data/goat/bags/raw/<bag-directory> \
+  use_clock:=true
+```
+
 ## Rules
 
 - Keep this package launch/config only.
 - Treat launch files in this package as app entrypoints, not private wrappers.
 - Keep NVIDIA RealSense and Visual SLAM nodes composable.
 - Keep deploy wiring generic: select one launch file plus launch arguments.
-- Add recording or replay back as app-specific launch arguments only when that
-  workflow is needed again.
+- Keep recording profile-driven so launch files do not duplicate topic lists.

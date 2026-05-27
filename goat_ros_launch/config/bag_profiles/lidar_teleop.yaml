@@ -1,0 +1,10 @@
+topics:
+  - /scan
+  - /tf
+  - /tf_static
+  - /cmd/vesc
+  - /imu/data_raw
+  - /motor_state
+  - /odom
+  - /diagnostics
+  - /rosout

@@ -19,6 +19,8 @@ setup(
             glob.glob(os.path.join('launch', '*.launch.py'))),
         (os.path.join('share', package_name, 'config', 'isaac_ros'),
             glob.glob(os.path.join('config', 'isaac_ros', '*.yaml'))),
+        (os.path.join('share', package_name, 'config', 'bag_profiles'),
+            glob.glob(os.path.join('config', 'bag_profiles', '*.yaml'))),
     ],
     install_requires=['setuptools'],
     zip_safe=True,

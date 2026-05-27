@@ -1,0 +1,9 @@
+topics:
+  - /stereo/left/image_rect
+  - /stereo/left/camera_info
+  - /stereo/right/image_rect
+  - /stereo/right/camera_info
+  - /tf
+  - /tf_static
+  - /diagnostics
+  - /rosout

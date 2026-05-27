@@ -1,0 +1,19 @@
+topics:
+  - /stereo/left/image_rect
+  - /stereo/left/camera_info
+  - /stereo/right/image_rect
+  - /stereo/right/camera_info
+  - /camera/depth/image_rect_raw
+  - /camera/depth/camera_info
+  - /imu/data_raw
+  - /tf
+  - /tf_static
+  - /cmd/vesc
+  - /motor_state
+  - /visual_slam/status
+  - /visual_slam/tracking/odometry
+  - /visual_slam/tracking/vo_pose
+  - /visual_slam/tracking/slam_path
+  - /visual_slam/tracking/vo_path
+  - /diagnostics
+  - /rosout

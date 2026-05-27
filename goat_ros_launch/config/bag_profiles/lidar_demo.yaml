@@ -1,0 +1,6 @@
+topics:
+  - /scan
+  - /tf
+  - /tf_static
+  - /diagnostics
+  - /rosout

@@ -15,6 +15,8 @@ deployable app target selected by `config/deploy/robot_app.yaml` in
   `joy_node` and `goat_teleop`, publishing `cmd/vesc` over ROS.
 - `teleop_only.launch.py`: Starts VESC command reception, joystick teleop, and
   the LD19 lidar for manual lidar/teleop runs.
+- `lidar_bag_demo.launch.py`: Starts only the LD19 lidar plus optional bag
+  recording for quick RViz and bag download demos.
 - `vslam.launch.py`: Starts sensors plus composable Isaac ROS Visual SLAM in
   the same NVIDIA component container.
 - `laser_driver.launch.py`: Starts the GOAT LD19 lidar driver.
@@ -106,6 +108,15 @@ ros2 launch goat_ros_launch teleop_only.launch.py \
   bag_profile:=lidar_teleop \
   bag_note:=garage_test \
   robot_name:=goat-racer-orange
+```
+
+Run the lidar-only bag demo:
+
+```bash
+ros2 launch goat_ros_launch lidar_bag_demo.launch.py \
+  record_bag:=true \
+  bag_profile:=lidar_demo \
+  bag_note:=show_and_tell
 ```
 
 Replay a recorded bag with `/clock`:
